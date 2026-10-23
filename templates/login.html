@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In | IntervAI</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .security-strip {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding: 8px 14px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            background: rgba(34, 197, 94, 0.05);
+            border: 1px solid rgba(34, 197, 94, 0.15);
+            font-size: 12px;
+            color: #86efac;
+            text-align: center;
+        }
+        .security-strip span {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .rate-limit-box {
+            display: none;
+            padding: 12px 14px;
+            border-radius: 8px;
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            color: #fca5a5;
+            font-size: 13px;
+            margin-bottom: 14px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+
+<body class="auth-page">
+
+    <header class="navbar">
+        <a href="/" class="brand">
+            <img src="/static/logo.svg" class="brand-logo" alt="IntervAI">
+            <span class="brand-name">IntervAI</span>
+        </a>
+
+        <div class="nav-actions">
+            <a href="/" class="nav-btn">Home</a>
+            <a href="/signup" class="nav-btn primary">Create Account</a>
+        </div>
+    </header>
+
+    <main class="auth-main">
+
+        <section class="auth-copy">
+
+            <div class="auth-badge">
+                <span>✦</span>
+                Enterprise AI Interview Platform
+            </div>
+
+            <h1>
+                Sign In.
+                <span class="gradient-text">Secure Access.</span>
+            </h1>
+
+            <p>
+                Access your personalized interview workspace, review your AI scoring reports,
+                and practice technical, HR, and behavioral assessments tailored to your target role.
+            </p>
+
+            <div class="auth-trust">
+                <div class="trust-item">Real-Time Resume &amp; Job Description Gap Analysis</div>
+                <div class="trust-item">Speech-to-Text &amp; Voice-Driven Questioning</div>
+                <div class="trust-item">Enterprise Security &amp; Data Encryption</div>
+            </div>
+
+        </section>
+
+        <section class="auth-card glass-card">
+
+            <div class="auth-logo">
+                <img src="/static/logo.svg" alt="IntervAI logo">
+            </div>
+
+            <h2>Sign In</h2>
+
+            <p class="auth-subtitle">
+                Welcome back. Enter your credentials to continue.
+            </p>
+
+            <div class="security-strip">
+                <span>🔒 256-Bit Encryption</span>
+                <span>•</span>
+                <span>🛡️ Anti-Brute Force Protected</span>
+            </div>
+
+            <div id="rateLimitBox" class="rate-limit-box"></div>
+            <div id="errorMessage" class="auth-error"></div>
+
+            <form id="loginForm" class="auth-form" autocomplete="on">
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input
+                        id="email"
+                        name="email"
+                        type="email"
+                        class="auth-input"
+                        placeholder="name@example.com"
+                        autocomplete="email"
+                        required
+                    >
+                    <div id="emailFeedback" class="input-feedback"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input
+                        id="password"
+                        name="password"
+                        type="password"
+                        class="auth-input"
+                        placeholder="Enter your password"
+                        autocomplete="current-password"
+                        required
+                    >
+                </div>
+
+                <button type="submit" id="submitBtn" class="btn btn-primary btn-full">
+                    Sign In
+                </button>
+
+            </form>
+
+            <div class="auth-footer">
+                Don't have an account?
+                <a href="/signup">Create account</a>
+            </div>
+
+        </section>
+
+    </main>
+
+    <script>
+const form = document.getElementById("loginForm");
+        const errorMessage = document.getElementById("errorMessage");
+        const rateLimitBox = document.getElementById("rateLimitBox");
+        const submitBtn = document.getElementById("submitBtn");
+        const emailInput = document.getElementById("email");
+        const emailFeedback = document.getElementById("emailFeedback");
+
+        const DISPOSABLE_DOMAINS = [
+            "tempmail.com", "mailinator.com", "10minutemail.com", "guerrillamail.com",
+            "yopmail.com", "throwawaymail.com", "sharklasers.com", "trashmail.com",
+            "fake.com", "test.com", "dispostable.com"
+        ];
+
+        emailInput.addEventListener("blur", function() {
+            const val = emailInput.value.trim().toLowerCase();
+            if (!val || !val.includes("@")) {
+                emailFeedback.style.display = "none";
+                return;
+            }
+            const domain = val.split("@")[1];
+            if (DISPOSABLE_DOMAINS.includes(domain)) {
+                emailFeedback.textContent = "Disposable emails are not permitted. Please use a genuine email.";
+                emailFeedback.className = "input-feedback invalid";
+            } else {
+                emailFeedback.style.display = "none";
+            }
+        });
+
+        form.addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            errorMessage.style.display = "none";
+            errorMessage.textContent = "";
+            rateLimitBox.style.display = "none";
+
+            const emailVal = emailInput.value.trim().toLowerCase();
+            const domain = emailVal.split("@")[1];
+            if (DISPOSABLE_DOMAINS.includes(domain)) {
+                errorMessage.textContent = "Disposable email domains are blocked. Please sign in with a genuine email.";
+                errorMessage.style.display = "block";
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Authenticating...";
+
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch("/login", {
+                    method: "POST",
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    window.location.href = "/dashboard";
+                    return;
+                }
+
+                if (data.rate_limited) {
+                    rateLimitBox.innerHTML = "<strong>Security Notice:</strong> " + (data.message || "Too many failed attempts. Temporarily locked.");
+                    rateLimitBox.style.display = "block";
+                } else {
+                    errorMessage.textContent = data.message || "Login failed. Please check your credentials.";
+                    errorMessage.style.display = "block";
+                }
+
+            } catch (error) {
+                errorMessage.textContent = "Unable to reach server. Please check your network.";
+                errorMessage.style.display = "block";
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Sign In to IntervAI";
+            }
+        });
+</script>
+
+</body>
+</html>

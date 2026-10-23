@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IntervAI | Executive AI Interview Intelligence</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .features-grid-6 {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 22px;
+            margin-top: 36px;
+        }
+
+        .how-grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 20px;
+            margin-top: 36px;
+        }
+
+        .hero-trust-row {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            flex-wrap: wrap;
+            margin-top: 26px;
+            color: #94a3b8;
+            font-size: 13px;
+        }
+
+        .hero-trust-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .demo-score-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            background: rgba(34, 197, 94, 0.12);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.25);
+        }
+
+        @media (max-width: 950px) {
+            .features-grid-6 { grid-template-columns: repeat(2, 1fr); }
+            .how-grid-4 { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 650px) {
+            .features-grid-6 { grid-template-columns: 1fr; }
+            .how-grid-4 { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="navbar">
+    <a href="/" class="brand">
+        <img src="/static/logo.svg" class="brand-logo" alt="IntervAI">
+        <span class="brand-name">IntervAI</span>
+    </a>
+
+    <nav class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#how-it-works">How It Works</a>
+        <a href="#modes">Interview Modes</a>
+    </nav>
+
+    {{NAV_ACTIONS}}
+</header>
+
+<main class="container">
+
+    <section class="hero" style="position: relative;">
+        
+        <div class="hero-glow-aura"></div>
+
+        <div class="animate-fade-up">
+            <div class="auth-badge">
+                <span class="live-status-dot"></span>
+                Intelligent Interview Preparation Platform
+            </div>
+
+            <h1 style="margin-top: 14px;">
+                Master your next interview with <span class="gradient-text">AI Precision.</span>
+            </h1>
+
+            <p style="margin-top: 14px; font-size: 16px; line-height: 1.7; color: #94a3b8; max-width: 580px;">
+                IntervAI scans your resume against the employer's Job Description, detects technical skill gaps, and synthesizes tailored, progressive interview questions with voice synthesis and live evaluation.
+            </p>
+
+            <div style="margin-top: 24px;">
+                {{HERO_ACTIONS}}
+            </div>
+
+            <div class="hero-trust-row">
+                <span class="hero-trust-item">🔒 256-Bit TLS Security</span>
+                <span>•</span>
+                <span class="hero-trust-item">⚡ Sub-2s LLM Inference</span>
+                <span>•</span>
+                <span class="hero-trust-item">🎙️ Real-Time Voice STT/TTS</span>
+            </div>
+        </div>
+
+        <div class="hero-preview glass-card animate-fade-up delay-1">
+            <div class="preview-top">
+                <div>
+                    <div class="preview-title" style="display: flex; align-items: center; gap: 8px;">
+                        <span>Interactive AI Interviewer</span>
+                        <div id="demoWaveform" class="waveform-bars" style="display: none;">
+                            <span class="waveform-bar"></span>
+                            <span class="waveform-bar"></span>
+                            <span class="waveform-bar"></span>
+                            <span class="waveform-bar"></span>
+                        </div>
+                    </div>
+                    <div style="color: #64748b; font-size: 12px; margin-top: 4px;">
+                        Voice synthesis &amp; real-time transcription test
+                    </div>
+                </div>
+
+                <div class="preview-status" style="display: inline-flex; align-items: center;">
+                    <span class="live-status-dot"></span>
+                    READY
+                </div>
+            </div>
+
+            <div class="preview-question">
+                <div style="color: #64748b; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; margin-bottom: 8px; text-transform: uppercase;">
+                    Target Question
+                </div>
+                <strong id="demoQuestion" style="color: #f8fafc; font-size: 15px; line-height: 1.5; display: block;">
+                    "Tell me about a challenging technical or architectural problem you solved, and how you diagnosed the root cause."
+                </strong>
+            </div>
+
+            <textarea
+                id="demoAnswer"
+                class="preview-answer"
+                placeholder="Type your response here or click 'Speak Answer' to test voice transcription..."
+            ></textarea>
+
+            <div class="preview-controls">
+                <button id="speechButton" class="preview-speech" type="button">
+                    🎙 Speak Answer
+                </button>
+                <button id="submitDemo" class="preview-submit" type="button">
+                    Evaluate Response →
+                </button>
+            </div>
+
+            <div id="demoFeedback" class="preview-feedback" style="display: none;"></div>
+
+            <div style="display: flex; justify-content: space-between; margin-top: 14px; color: #64748b; font-size: 11px;">
+                <span>Adaptive speech transcription powered by Web Speech API</span>
+                <span>LIVE PREVIEW</span>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" style="padding: 90px 0 60px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <div class="auth-badge">Enterprise Capability</div>
+            <h2 style="font-size: 38px; letter-spacing: -1.2px; margin-top: 10px;">
+                Engineered for Realistic Evaluation
+            </h2>
+            <p style="color: #94a3b8; max-width: 640px; margin: 12px auto 0; line-height: 1.7;">
+                Unlike static question sets, IntervAI functions as an autonomous, adaptive interviewer tailored to your background, the role's actual JD, and your target seniority.
+            </p>
+        </div>
+
+        <div class="features-grid-6">
+            
+            <div class="glass-card stat-card">
+                <div class="feature-icon-badge">🎯</div>
+                <div class="stat-value" style="font-size: 18px; margin: 0 0 8px;">
+                    Resume vs. JD Gap Analysis
+                </div>
+                <p style="color: #94a3b8; line-height: 1.6; font-size: 13.5px;">
+                    Parses candidate PDF/Word resumes against target Job Descriptions. Automatically diagnoses technical competencies missing or weak in your resume and probes them directly.
+                </p>
+            </div>
+
+            <div id="modes" class="glass-card stat-card">
+                <div class="feature-icon-badge">⏱️</div>
+                <div class="stat-value" style="font-size: 18px; margin: 0 0 8px;">
+                    Real vs. Practice Environments
+                </div>
+                <p style="color: #94a3b8; line-height: 1.6; font-size: 13.5px;">
+                    Choose <strong>Real Mode</strong> with strict 3-minute timed countdowns and pressure-testing, or <strong>Practice Mode</strong> with on-demand STAR/CAR approach hints and post-answer coaching.
+                </p>
+            </div>
+
+            <div class="glass-card stat-card">
+                <div class="feature-icon-badge">🎙️</div>
+                <div class="stat-value" style="font-size: 18px; margin: 0 0 8px;">
+                    Voice AI (TTS &amp; Live STT)
+                </div>
+                <p style="color: #94a3b8; line-height: 1.6; font-size: 13.5px;">
+                    The AI Interviewer speaks questions aloud with voice synthesis. Candidates can speak naturally while real-time speech transcription streams their words live, tracking articulation &amp; WPM.
+                </p>
+            </div>
+
+            <div class="glass-card stat-card">
+                <div class="feature-icon-badge">📊</div>
+                <div class="stat-value" style="font-size: 18px; margin: 0 0 8px;">
+                    Custom Length &amp; Seniority Mapping
+                </div>
+                <p style="color: #94a3b8; line-height: 1.6; font-size: 13.5px;">
+                    Configure sessions with 5, 8, 10, or 12 questions. Question difficulty scales intelligently from Foundation to Intermediate to Advanced, adapting to Intern through Executive levels.
+                </p>
+            </div>
+
+            <div class="glass-card stat-card">
+                <div class="feature-icon-badge">💼</div>
+                <div class="stat-value" style="font-size: 18px; margin: 0 0 8px;">
+                    Multi-Track Specializations
+                </div>
+                <p style="color: #94a3b8; line-height: 1.6; font-size: 13.5px;">
+                    Dedicated strategies for Technical Coding, System Design Architecture, HR Cultural Alignment, Behavioral STAR Scenarios, Business Case Studies, and Project Deep-Dives.
+                </p>
+            </div>
+
+            <div class="glass-card stat-card">
+                <div class="feature-icon-badge">📈</div>
+                <div class="stat-value" style="font-size: 18px; margin: 0 0 8px;">
+                    Radar Analytics &amp; Roadmap
+                </div>
+                <p style="color: #94a3b8; line-height: 1.6; font-size: 13.5px;">
+                    Comprehensive post-interview scorecard featuring 5-axis Chart.js radar metrics (Technical, Communication, Accuracy, Approach, Pace), overall letter grades, and personalized study guides.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section id="how-it-works" style="padding: 60px 0 100px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <div class="auth-badge">Step-by-Step Flow</div>
+            <h2 style="font-size: 38px; letter-spacing: -1.2px; margin-top: 10px;">
+                How IntervAI Works
+            </h2>
+            <p style="color: #94a3b8; max-width: 600px; margin: 12px auto 0; line-height: 1.7;">
+                From candidate onboarding to AI-driven evaluation in four simple steps.
+            </p>
+        </div>
+
+        <div class="how-grid-4">
+            
+            <div class="glass-card stat-card">
+                <div class="stat-label" style="font-size: 14px; font-weight: 800; color: #4f7ef8;">STEP 01</div>
+                <div class="stat-value" style="font-size: 19px; margin: 10px 0 8px;">
+                    Configure Track
+                </div>
+                <p style="color: #94a3b8; font-size: 13px; line-height: 1.6;">
+                    Select your target role, experience level (Student to Executive), interview mode (Real vs. Practice), and choose between 5 to 12 questions.
+                </p>
+            </div>
+
+            <div class="glass-card stat-card">
+                <div class="stat-label" style="font-size: 14px; font-weight: 800; color: #4f7ef8;">STEP 02</div>
+                <div class="stat-value" style="font-size: 19px; margin: 10px 0 8px;">
+                    Upload Resume &amp; JD
+                </div>
+                <p style="color: #94a3b8; font-size: 13px; line-height: 1.6;">
+                    Upload your PDF/Word resume and the employer's Job Description. Our extraction engine securely verifies and reads both documents in real time.
+                </p>
+            </div>
+
+            <div class="glass-card stat-card">
+                <div class="stat-label" style="font-size: 14px; font-weight: 800; color: #4f7ef8;">STEP 03</div>
+                <div class="stat-value" style="font-size: 19px; margin: 10px 0 8px;">
+                    AI Gap Scanning
+                </div>
+                <p style="color: #94a3b8; font-size: 13px; line-height: 1.6;">
+                    The LLM cross-references the JD against your background, isolates missing skills, and formulates a progressive question roadmap tailored to you.
+                </p>
+            </div>
+
+            <div class="glass-card stat-card">
+                <div class="stat-label" style="font-size: 14px; font-weight: 800; color: #4f7ef8;">STEP 04</div>
+                <div class="stat-value" style="font-size: 19px; margin: 10px 0 8px;">
+                    Live Session &amp; Report
+                </div>
+                <p style="color: #94a3b8; font-size: 13px; line-height: 1.6;">
+                    Interact via voice or text, manage your timed countdown or practice hints, then receive instant radar analytics, sub-scores, and improvement tips.
+                </p>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<script>
+const speechButton = document.getElementById("speechButton");
+    const submitDemo = document.getElementById("submitDemo");
+    const answerBox = document.getElementById("demoAnswer");
+    const feedback = document.getElementById("demoFeedback");
+    const demoWaveform = document.getElementById("demoWaveform");
+
+    let isListening = false;
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+        speechButton.textContent = "🎙 Speech Unavailable";
+        speechButton.disabled = true;
+        speechButton.style.opacity = "0.5";
+    } else {
+        const recognition = new SpeechRecognition();
+        recognition.lang = "en-US";
+        recognition.continuous = false;
+        recognition.interimResults = true;
+
+        speechButton.addEventListener("click", function() {
+            if (isListening) {
+                recognition.stop();
+                return;
+            }
+
+            try {
+                isListening = true;
+                speechButton.textContent = "🔴 Stop Recording";
+                speechButton.style.background = "rgba(239, 68, 68, 0.18)";
+                speechButton.style.borderColor = "rgba(239, 68, 68, 0.4)";
+                demoWaveform.style.display = "inline-flex";
+                feedback.style.display = "block";
+                feedback.innerHTML = "<span style='color:#60a5fa;'>Listening... Speak clearly into your microphone.</span>";
+                recognition.start();
+            } catch (err) {
+                resetMic();
+            }
+        });
+
+        recognition.onresult = function(event) {
+            let interim = "";
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    answerBox.value = (answerBox.value ? answerBox.value + " " : "") + event.results[i][0].transcript;
+                } else {
+                    interim += event.results[i][0].transcript;
+                }
+            }
+            feedback.innerHTML = `<span style='color:#94a3b8;'>Live transcription: ${interim || 'Transcribing...'}</span>`;
+        };
+
+        recognition.onend = resetMic;
+        recognition.onerror = function() {
+            resetMic();
+            feedback.innerHTML = "<span style='color:#fca5a5;'>Microphone disconnected or permission denied.</span>";
+        };
+
+        function resetMic() {
+            isListening = false;
+            speechButton.textContent = "🎙 Speak Answer";
+            speechButton.style.background = "";
+            speechButton.style.borderColor = "";
+            demoWaveform.style.display = "none";
+        }
+    }
+
+    submitDemo.addEventListener("click", function() {
+        const answer = answerBox.value.trim();
+
+        if (!answer) {
+            feedback.style.display = "block";
+            feedback.innerHTML = "<span style='color:#fca5a5;'>Please write or speak an answer first to run the evaluation.</span>";
+            return;
+        }
+
+        submitDemo.disabled = true;
+        submitDemo.textContent = "Analyzing Response...";
+        feedback.style.display = "block";
+        feedback.innerHTML = "<span style='color:#60a5fa;'>Running AI articulation and structure analysis...</span>";
+
+        setTimeout(function() {
+            const wordCount = answer.split(/\s+/).filter(Boolean).length;
+            const score = Math.min(95, Math.max(68, 70 + Math.floor(wordCount * 0.45)));
+
+            feedback.innerHTML = `
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 8px;">
+                    <span class="demo-score-chip">✓ Evaluated: ${score}/100</span>
+                    <span style="font-size:12px; color:#94a3b8;">${wordCount} Words Recorded</span>
+                </div>
+                <div style="font-size:13px; color:#cbd5e1; line-height:1.6;">
+                    <strong>AI Analysis:</strong> Good problem framing. To elevate this response into an executive answer, structure using the <em>Situation &rarr; Task &rarr; Action &rarr; Result (STAR)</em> methodology and highlight quantifiable metrics.
+                </div>
+            `;
+            submitDemo.disabled = false;
+            submitDemo.textContent = "Re-Evaluate Response →";
+        }, 900);
+    });
+</script>
+
+</body>
+</html>

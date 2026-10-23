@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Start Interview — IntervAI</title>
+
+    <link rel="stylesheet" href="/static/style.css">
+
+    <style>
+        .setup-page {
+            min-height: 100vh;
+            padding: 40px 20px 70px;
+        }
+
+        .setup-container {
+            width: min(1000px, 100%);
+            margin: 0 auto;
+        }
+
+        .setup-header {
+            margin-bottom: 28px;
+        }
+
+        .setup-header h1 {
+            margin: 0 0 8px;
+            font-size: 34px;
+        }
+
+        .setup-header p {
+            margin: 0;
+            color: #94a3b8;
+        }
+
+        .setup-card {
+            background: rgba(15, 23, 42, 0.78);
+            border: 1px solid rgba(148, 163, 184, 0.12);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+            backdrop-filter: blur(18px);
+        }
+
+        .form-section {
+            margin-bottom: 28px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 10px;
+            color: #f8fafc;
+            font-weight: 700;
+        }
+
+        .form-select,
+        .form-input,
+        .file-input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 14px 16px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: #060d1a;
+            color: #e8edf5;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .form-select:focus,
+        .form-input:focus,
+        .file-input:focus {
+            border-color: #4f7ef8;
+            box-shadow: 0 0 0 3px rgba(79, 126, 248, 0.15);
+        }
+
+        .form-select optgroup {
+            background: #0b1628;
+            color: #7aa6ff;
+            font-weight: 700;
+        }
+
+        .form-select option {
+            background: #060d1a;
+            color: #e8edf5;
+        }
+
+        .help-text {
+            margin-top: 6px;
+            color: #7a8a9e;
+            font-size: 13px;
+        }
+
+        .other-role-box {
+            display: none;
+            margin-top: 12px;
+        }
+
+        .other-role-box.show {
+            display: block;
+        }
+
+        .file-wrapper {
+            padding: 18px;
+            border: 1px dashed rgba(79, 126, 248, 0.3);
+            border-radius: 12px;
+            background: rgba(79, 126, 248, 0.03);
+        }
+
+        .file-input {
+            padding: 11px;
+        }
+
+        .file-input::file-selector-button {
+            margin-right: 12px;
+            padding: 9px 14px;
+            border: none;
+            border-radius: 8px;
+            background: #4f7ef8;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .mode-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .mode-option input {
+            display: none;
+        }
+
+        .mode-card {
+            display: block;
+            padding: 22px;
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            border-radius: 14px;
+            background: rgba(11, 22, 40, 0.75);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .mode-card:hover {
+            border-color: rgba(79, 126, 248, 0.45);
+            transform: translateY(-2px);
+        }
+
+        .mode-option input:checked + .mode-card {
+            border-color: #4f7ef8;
+            background: rgba(79, 126, 248, 0.08);
+            box-shadow: 0 0 0 2px rgba(79, 126, 248, 0.18);
+        }
+
+        .mode-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            color: #e8edf5;
+            margin-bottom: 8px;
+        }
+
+        .selected-badge {
+            display: none;
+            margin-left: auto;
+            padding: 4px 9px;
+            border-radius: 999px;
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .mode-option input:checked + .mode-card .selected-badge {
+            display: inline-block;
+        }
+
+        .mode-description {
+            color: #7a8a9e;
+            line-height: 1.5;
+            font-size: 13px;
+        }
+
+        .submit-area {
+            margin-top: 34px;
+            padding-top: 26px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            text-align: center;
+        }
+
+        .start-button {
+            min-width: 260px;
+            padding: 14px 26px;
+            border: none;
+            border-radius: 10px;
+            background: #4f7ef8;
+            color: white;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .start-button:hover {
+            background: #3d6ef5;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(79, 126, 248, 0.35);
+        }
+
+        .start-button:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message,
+        .success-message {
+            display: none;
+            margin-top: 18px;
+            padding: 13px 15px;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+
+        .error-message {
+            color: #fca5a5;
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .success-message {
+            color: #86efac;
+            background: rgba(34, 197, 94, 0.08);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        @media (max-width: 700px) {
+            .setup-card {
+                padding: 20px;
+            }
+
+            .mode-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .setup-header h1 {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="setup-page">
+
+    <div class="setup-container">
+
+        <div class="setup-header">
+            <h1>Start Your AI Interview</h1>
+            <p>Tell IntervAI about the role, your experience, and the job you're targeting.</p>
+        </div>
+
+        <div class="setup-card">
+
+            <form id="interviewForm">
+
+                <div class="form-section">
+
+                    <label class="form-label" for="role">
+                        Targeted Role
+                    </label>
+
+                    <select
+                        class="form-select"
+                        id="role"
+                        name="role"
+                        required
+                    >
+
+                        <option value="">Select your target role</option>
+
+                        <optgroup label="Software, IT & Web Development">
+                            <option>Software Engineer</option>
+                            <option>Software Developer</option>
+                            <option>Frontend Developer</option>
+                            <option>Backend Developer</option>
+                            <option>Full Stack Developer</option>
+                            <option>Web Developer</option>
+                            <option>Mobile App Developer</option>
+                            <option>Android Developer</option>
+                            <option>iOS Developer</option>
+                            <option>React Developer</option>
+                            <option>Angular Developer</option>
+                            <option>Vue.js Developer</option>
+                            <option>Node.js Developer</option>
+                            <option>Python Developer</option>
+                            <option>Java Developer</option>
+                            <option>C++ Developer</option>
+                            <option>.NET Developer</option>
+                            <option>PHP Developer</option>
+                            <option>Ruby Developer</option>
+                            <option>Game Developer</option>
+                            <option>Embedded Software Developer</option>
+                            <option>Firmware Developer</option>
+                            <option>Blockchain Developer</option>
+                            <option>Web3 Developer</option>
+                            <option>Solutions Architect</option>
+                            <option>Software Architect</option>
+                        </optgroup>
+
+                        <optgroup label="Data, AI & Analytics">
+                            <option>Data Analyst</option>
+                            <option>Business Data Analyst</option>
+                            <option>Data Scientist</option>
+                            <option>Data Engineer</option>
+                            <option>Analytics Engineer</option>
+                            <option>Machine Learning Engineer</option>
+                            <option>AI Engineer</option>
+                            <option>AI Researcher</option>
+                            <option>Generative AI Engineer</option>
+                            <option>Computer Vision Engineer</option>
+                            <option>NLP Engineer</option>
+                            <option>Deep Learning Engineer</option>
+                            <option>ML Ops Engineer</option>
+                            <option>AI Product Manager</option>
+                            <option>Quantitative Analyst</option>
+                            <option>Statistician</option>
+                            <option>Research Scientist</option>
+                        </optgroup>
+
+                        <optgroup label="Cloud, DevOps & Cybersecurity">
+                            <option>DevOps Engineer</option>
+                            <option>Cloud Engineer</option>
+                            <option>Cloud Architect</option>
+                            <option>Site Reliability Engineer</option>
+                            <option>Platform Engineer</option>
+                            <option>Infrastructure Engineer</option>
+                            <option>Network Engineer</option>
+                            <option>Network Administrator</option>
+                            <option>System Administrator</option>
+                            <option>Database Administrator</option>
+                            <option>Cybersecurity Analyst</option>
+                            <option>Cybersecurity Engineer</option>
+                            <option>Security Engineer</option>
+                            <option>Security Architect</option>
+                            <option>Penetration Tester</option>
+                            <option>Ethical Hacker</option>
+                            <option>SOC Analyst</option>
+                            <option>Information Security Analyst</option>
+                            <option>Cloud Security Engineer</option>
+                            <option>DevSecOps Engineer</option>
+                        </optgroup>
+
+                        <optgroup label="Engineering & Manufacturing">
+                            <option>Mechanical Engineer</option>
+                            <option>Electrical Engineer</option>
+                            <option>Electronics Engineer</option>
+                            <option>Civil Engineer</option>
+                            <option>Chemical Engineer</option>
+                            <option>Industrial Engineer</option>
+                            <option>Automotive Engineer</option>
+                            <option>Aerospace Engineer</option>
+                            <option>Biomedical Engineer</option>
+                            <option>Mechatronics Engineer</option>
+                            <option>Robotics Engineer</option>
+                            <option>Manufacturing Engineer</option>
+                            <option>Production Engineer</option>
+                            <option>Process Engineer</option>
+                            <option>Quality Engineer</option>
+                            <option>Maintenance Engineer</option>
+                            <option>Control Systems Engineer</option>
+                            <option>Engineering Manager</option>
+                        </optgroup>
+
+                        <optgroup label="Other">
+                            <option value="Other">Other</option>
+                        </optgroup>
+
+                    </select>
+
+                    <div class="other-role-box" id="otherRoleBox">
+                        <input
+                            type="text"
+                            class="form-input"
+                            id="custom_role"
+                            name="custom_role"
+                            placeholder="Enter your role"
+                        >
+
+                        <div class="help-text">
+                            Enter the exact job role you want to prepare for.
+                        </div>
+                    </div>
+
+                </div>
+
+                
+                <div class="form-section">
+
+                    <label class="form-label" for="level">
+                        Experience Level
+                    </label>
+
+                    <select
+                        class="form-select"
+                        id="level"
+                        name="level"
+                        required
+                    >
+                        <option value="">Select experience level</option>
+                        <option>Student</option>
+                        <option>Intern</option>
+                        <option>Fresher</option>
+                        <option>Entry Level</option>
+                        <option>Junior</option>
+                        <option>Mid Level</option>
+                        <option>Senior</option>
+                        <option>Lead</option>
+                        <option>Manager</option>
+                        <option>Director</option>
+                        <option>Executive</option>
+                    </select>
+
+                </div>
+
+                
+                <div class="form-section">
+
+                    <label class="form-label" for="interview_type">
+                        Interview Type
+                    </label>
+
+                    <select
+                        class="form-select"
+                        id="interview_type"
+                        name="interview_type"
+                        required
+                    >
+                        <option value="">Select interview type</option>
+                        <option>Technical</option>
+                        <option>HR</option>
+                        <option>Behavioral</option>
+                        <option>Project</option>
+                        <option>System Design</option>
+                        <option>Case Study</option>
+                        <option selected>Mixed</option>
+                    </select>
+
+                </div>
+
+                
+                <div class="form-section">
+                    <div style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:12px;background:rgba(79,126,248,0.08);border:1px solid rgba(79,126,248,0.25);">
+                        <span style="font-size:22px;">⚡</span>
+                        <div>
+                            <div style="font-size:13px;font-weight:800;color:#93c5fd;letter-spacing:0.02em;">Adaptive Interview Flow</div>
+                            <div style="font-size:12px;color:#94a3b8;margin-top:2px;line-height:1.4;">The AI interviewer dynamically controls question depth and session length based on your answers and expertise—just like a real interview.</div>
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div class="form-section">
+
+                    <label class="form-label" for="resume">
+                        Upload Resume
+                    </label>
+
+                    <div class="file-wrapper">
+
+                        <input
+                            type="file"
+                            class="file-input"
+                            id="resume"
+                            name="resume"
+                            accept=".pdf,.doc,.docx"
+                            required
+                        >
+
+                        <div class="help-text">
+                            Upload your latest resume — PDF, DOC or DOCX.
+                        </div>
+
+                    </div>
+
+                </div>
+
+                
+                <div class="form-section">
+
+                    <label class="form-label" for="job_description_file">
+                        Job Description
+                    </label>
+
+                    <div class="file-wrapper">
+
+                        <input
+                            type="file"
+                            class="file-input"
+                            id="job_description_file"
+                            name="job_description_file"
+                            accept=".pdf,.doc,.docx"
+                            required
+                        >
+
+                        <div class="help-text">
+                            Upload the job description — PDF, DOC or DOCX.
+                        </div>
+
+                    </div>
+
+                </div>
+
+                
+                <div class="form-section">
+
+                    <label class="form-label">
+                        Select Interview Mode
+                    </label>
+
+                    <div class="mode-grid">
+
+                        <div class="mode-option">
+
+                            <input
+                                type="radio"
+                                id="real"
+                                name="mode"
+                                value="Real Interview"
+                                checked
+                            >
+
+                            <label class="mode-card" for="real">
+
+                                <div class="mode-title">
+                                    🎯 Real Interview
+                                    <span class="selected-badge">
+                                        Selected
+                                    </span>
+                                </div>
+
+                                <div class="mode-description">
+                                    A realistic interview experience. No coaching
+                                    during the interview. Feedback comes after
+                                    the interview.
+                                </div>
+
+                            </label>
+
+                        </div>
+
+                        <div class="mode-option">
+
+                            <input
+                                type="radio"
+                                id="practice"
+                                name="mode"
+                                value="Practice Interview"
+                            >
+
+                            <label class="mode-card" for="practice">
+
+                                <div class="mode-title">
+                                    🧠 Practice Interview
+                                    <span class="selected-badge">
+                                        Selected
+                                    </span>
+                                </div>
+
+                                <div class="mode-description">
+                                    Practice with guidance, interview approach
+                                    tips, and coaching while you answer.
+                                </div>
+
+                            </label>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                
+                <div class="submit-area">
+
+                    <button
+                        type="submit"
+                        class="start-button"
+                        id="startButton"
+                    >
+                        Start the Interview →
+                    </button>
+
+                    <div
+                        class="error-message"
+                        id="errorMessage"
+                    ></div>
+
+                    <div
+                        class="success-message"
+                        id="successMessage"
+                    ></div>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+const form = document.getElementById("interviewForm");
+
+    const roleSelect = document.getElementById("role");
+
+    const otherRoleBox = document.getElementById("otherRoleBox");
+
+    const customRoleInput = document.getElementById("custom_role");
+
+    const startButton = document.getElementById("startButton");
+
+    const errorMessage = document.getElementById("errorMessage");
+
+    const successMessage = document.getElementById("successMessage");
+
+    roleSelect.addEventListener("change", function () {
+
+        if (this.value === "Other") {
+
+            otherRoleBox.classList.add("show");
+
+            customRoleInput.required = true;
+
+            customRoleInput.focus();
+
+        } else {
+
+            otherRoleBox.classList.remove("show");
+
+            customRoleInput.required = false;
+
+            customRoleInput.value = "";
+
+        }
+
+    });
+
+    form.addEventListener("submit", async function (event) {
+
+        event.preventDefault();
+
+        errorMessage.style.display = "none";
+
+        successMessage.style.display = "none";
+
+        const selectedRole = roleSelect.value;
+
+        if (!selectedRole) {
+
+            errorMessage.textContent =
+                "Please select a targeted role.";
+
+            errorMessage.style.display = "block";
+
+            return;
+
+        }
+
+        if (
+            selectedRole === "Other" &&
+            !customRoleInput.value.trim()
+        ) {
+
+            errorMessage.textContent =
+                "Please enter your role.";
+
+            errorMessage.style.display = "block";
+
+            customRoleInput.focus();
+
+            return;
+
+        }
+
+        const formData = new FormData(form);
+
+        startButton.disabled = true;
+
+        startButton.textContent =
+            "Preparing Interview...";
+
+        try {
+
+            const response = await fetch(
+                "/start-interview",
+                {
+                    method: "POST",
+                    body: formData
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data.detail ||
+                    data.message ||
+                    "Unable to start the interview."
+                );
+
+            }
+
+            successMessage.textContent =
+                "Interview setup completed. Starting your interview...";
+
+            successMessage.style.display = "block";
+
+            setTimeout(function () {
+
+                window.location.href = "/interview/" + data.interview_id;
+
+            }, 800);
+
+        } catch (error) {
+
+            errorMessage.textContent =
+                error.message ||
+                "Something went wrong.";
+
+            errorMessage.style.display = "block";
+
+            startButton.disabled = false;
+
+            startButton.textContent =
+                "Start the Interview →";
+
+        }
+
+    });
+</script>
+
+</body>
+</html>

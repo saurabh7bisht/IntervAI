@@ -1,0 +1,1761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Interview — IntervAI</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        
+        .interview-page {
+            min-height: 100vh;
+            padding: 0 0 60px;
+        }
+
+        .interview-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 14px 24px;
+            background: rgba(2, 6, 23, 0.85);
+            border-bottom: 1px solid rgba(148,163,184,0.1);
+            backdrop-filter: blur(20px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .topbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 17px;
+        }
+
+        .topbar-brand img { width: 32px; height: 32px; }
+
+        .topbar-pills {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .meta-pill {
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(124,58,237,0.12);
+            border: 1px solid rgba(139,92,246,0.22);
+            color: #c4b5fd;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .meta-pill.practice { background: rgba(16,185,129,0.10); border-color: rgba(52,211,153,0.25); color: #34d399; }
+        .meta-pill.real { background: rgba(239,68,68,0.10); border-color: rgba(239,68,68,0.25); color: #fca5a5; }
+
+        .topbar-timer {
+            font-size: 20px;
+            font-weight: 900;
+            font-variant-numeric: tabular-nums;
+            color: #67e8f9;
+            min-width: 70px;
+            text-align: right;
+        }
+
+        .topbar-timer.warning { color: #fb923c; }
+        .topbar-timer.danger  { color: #f87171; animation: pulse-red 0.7s ease infinite; }
+
+        @keyframes pulse-red {
+            0%,100% { opacity: 1; }
+            50%      { opacity: 0.5; }
+        }
+
+        .interview-grid {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            gap: 24px;
+            width: min(1200px, calc(100% - 48px));
+            margin: 28px auto 0;
+            transition: all 0.3s ease;
+        }
+
+        .interview-grid.practice-mode {
+            grid-template-columns: 240px 1.15fr 430px;
+            width: min(1500px, calc(100% - 32px));
+        }
+
+        .left-panel {}
+
+        .ai-avatar-card {
+            background: rgba(15,23,42,0.82);
+            border: 1px solid rgba(148,163,184,0.12);
+            border-radius: 20px;
+            padding: 24px 20px;
+            text-align: center;
+            backdrop-filter: blur(18px);
+            margin-bottom: 16px;
+        }
+
+        .avatar-ring {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            margin: 0 auto 14px;
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 38px;
+            position: relative;
+            box-shadow: 0 0 0 0 rgba(79,126,248,0.4);
+        }
+
+        .avatar-ring.speaking {
+            animation: avatar-pulse 1.5s ease infinite;
+        }
+
+        @keyframes avatar-pulse {
+            0%   { box-shadow: 0 0 0 0 rgba(124,58,237,0.5); }
+            70%  { box-shadow: 0 0 0 18px rgba(124,58,237,0); }
+            100% { box-shadow: 0 0 0 0 rgba(124,58,237,0); }
+        }
+
+        .avatar-name {
+            font-weight: 800;
+            font-size: 15px;
+            color: #f8fafc;
+        }
+
+        .avatar-status {
+            color: #94a3b8;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .avatar-status.active { color: #34d399; }
+        .avatar-status.listening { color: #67e8f9; }
+
+        .progress-card {
+            background: rgba(15,23,42,0.82);
+            border: 1px solid rgba(148,163,184,0.12);
+            border-radius: 20px;
+            padding: 20px;
+            backdrop-filter: blur(18px);
+            margin-bottom: 16px;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            color: #94a3b8;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 8px;
+            border-radius: 999px;
+            background: rgba(148,163,184,0.12);
+            overflow: hidden;
+            margin-bottom: 14px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #2563eb, #4f7ef8);
+            transition: width 0.5s ease;
+        }
+
+        .q-number-badge {
+            text-align: center;
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .hint-card {
+            background: rgba(16,185,129,0.07);
+            border: 1px solid rgba(52,211,153,0.18);
+            border-radius: 16px;
+            padding: 16px;
+            display: none;
+        }
+
+        .hint-card.show { display: block; }
+
+        .hint-card h4 {
+            color: #34d399;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .hint-card p {
+            color: #94a3b8;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .hint-trigger-btn {
+            width: 100%;
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px dashed rgba(52,211,153,0.3);
+            background: transparent;
+            color: #34d399;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.2s;
+        }
+
+        .hint-trigger-btn:hover {
+            background: rgba(16,185,129,0.08);
+        }
+
+        .right-panel {}
+
+        .interview-card {
+            background: rgba(15,23,42,0.82);
+            border: 1px solid rgba(148,163,184,0.12);
+            border-radius: 24px;
+            padding: 32px;
+            backdrop-filter: blur(18px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+        }
+
+        .loading-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(79, 126, 248, 0.2);
+            border-top-color: #4f7ef8;
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-state h2 { color: #f8fafc; margin-bottom: 8px; }
+        .loading-state p  { color: #94a3b8; }
+
+        #questionState { display: none; }
+
+        .question-label {
+            color: #60a5fa;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .q-type-pill {
+            padding: 3px 8px;
+            border-radius: 6px;
+            background: rgba(124,58,237,0.12);
+            color: #c4b5fd;
+            font-size: 10px;
+        }
+
+        .diff-pill {
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+        }
+
+        .diff-Foundation  { background: rgba(52,211,153,0.12); color: #34d399; }
+        .diff-Intermediate{ background: rgba(251,191,36,0.12); color: #fbbf24; }
+        .diff-Advanced    { background: rgba(239,68,68,0.12); color: #f87171; }
+
+        .question-text {
+            font-size: 26px;
+            font-weight: 700;
+            line-height: 1.38;
+            color: #f8fafc;
+            margin: 0 0 20px;
+        }
+
+        .speak-q-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(139,92,246,0.25);
+            background: rgba(124,58,237,0.10);
+            color: #c4b5fd;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .speak-q-btn:hover   { background: rgba(124,58,237,0.2); }
+        .speak-q-btn.playing { border-color: rgba(103,232,249,0.4); background: rgba(6,182,212,0.1); color: #67e8f9; }
+
+        .answer-section {
+            margin-top: 28px;
+        }
+
+        .answer-top-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .answer-top-row span {
+            font-weight: 700;
+            color: #f8fafc;
+        }
+
+        .voice-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mic-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 9px 16px;
+            border-radius: 999px;
+            border: 1px solid rgba(139,92,246,0.3);
+            background: rgba(124,58,237,0.12);
+            color: #c4b5fd;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .mic-btn:hover   { transform: translateY(-1px); }
+        .mic-btn.idle    { }
+        .mic-btn.starting{ border-color: rgba(234,179,8,0.4); background: rgba(234,179,8,0.1); color: #fde047; }
+        .mic-btn.active  { border-color: rgba(239,68,68,0.5); background: rgba(239,68,68,0.15); color: #fca5a5; animation: mic-pulse 1.2s ease infinite; }
+
+        @keyframes mic-pulse {
+            0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.35); }
+            50%      { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+        }
+
+        .answer-timer {
+            font-size: 13px;
+            color: #67e8f9;
+            font-variant-numeric: tabular-nums;
+            font-weight: 700;
+        }
+
+        .live-transcript {
+            display: none;
+            padding: 10px 14px;
+            border-radius: 10px;
+            background: rgba(6,182,212,0.07);
+            border: 1px solid rgba(6,182,212,0.2);
+            color: #67e8f9;
+            font-size: 13px;
+            line-height: 1.6;
+            min-height: 36px;
+            margin-bottom: 10px;
+        }
+
+        .live-transcript.show { display: block; }
+
+        .live-interim { opacity: 0.6; font-style: italic; }
+
+        .answer-input {
+            width: 100%;
+            min-height: 160px;
+            box-sizing: border-box;
+            resize: vertical;
+            padding: 16px;
+            border-radius: 14px;
+            border: 1px solid rgba(148,163,184,0.18);
+            background: #07101e;
+            color: #f8fafc;
+            font: inherit;
+            font-size: 15px;
+            line-height: 1.65;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .answer-input:focus {
+            border-color: #4f7ef8;
+            box-shadow: 0 0 0 3px rgba(79,126,248,0.12);
+        }
+
+        .word-count {
+            color: #64748b;
+            font-size: 12px;
+            margin-top: 6px;
+            text-align: right;
+        }
+
+        .action-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            margin-top: 20px;
+        }
+
+        .finish-btn {
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(148,163,184,0.18);
+            background: rgba(148,163,184,0.07);
+            color: #94a3b8;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .finish-btn:hover { border-color: rgba(239,68,68,0.3); color: #fca5a5; }
+
+        .submit-btn {
+            padding: 13px 28px;
+            border-radius: 12px;
+            border: none;
+            background: #4f7ef8;
+            color: white;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 180px;
+        }
+
+        .submit-btn:hover    { background: #3d6ef5; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(79,126,248,0.3); }
+        .submit-btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        .msg-bar {
+            display: none;
+            margin-top: 14px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .msg-bar.error   { color: #fca5a5; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); }
+        .msg-bar.success { color: #86efac; background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); }
+        .msg-bar.info    { color: #67e8f9; background: rgba(6,182,212,0.08); border: 1px solid rgba(6,182,212,0.2); }
+
+        .coaching-side-column {
+            display: none;
+            background: rgba(15, 23, 42, 0.82);
+            border: 1px solid rgba(148, 163, 184, 0.14);
+            border-radius: 24px;
+            padding: 22px;
+            backdrop-filter: blur(18px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+            align-self: start;
+            position: sticky;
+            top: 80px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(148,163,184,0.2) transparent;
+        }
+
+        .interview-grid.practice-mode .coaching-side-column {
+            display: block;
+        }
+
+        .coaching-side-column::-webkit-scrollbar { width: 5px; }
+        .coaching-side-column::-webkit-scrollbar-thumb {
+            background: rgba(148,163,184,0.25);
+            border-radius: 999px;
+        }
+
+        .side-coach-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 14px;
+            border-bottom: 1px solid rgba(148,163,184,0.1);
+            margin-bottom: 16px;
+        }
+
+        .side-coach-badge {
+            font-size: 11px;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(52,211,153,0.12);
+            border: 1px solid rgba(52,211,153,0.25);
+            color: #34d399;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .coach-idle-banner {
+            padding: 16px;
+            border-radius: 16px;
+            background: rgba(79,126,248,0.06);
+            border: 1px solid rgba(79,126,248,0.18);
+            margin-bottom: 14px;
+        }
+
+        .idle-features-list {
+            margin: 10px 0 0;
+            padding-left: 18px;
+            color: #94a3b8;
+            font-size: 12px;
+            line-height: 1.7;
+        }
+        .idle-features-list strong { color: #cbd5e1; }
+
+        .idle-tip-card {
+            padding: 16px;
+            border-radius: 16px;
+            background: rgba(16,185,129,0.06);
+            border: 1px solid rgba(52,211,153,0.2);
+        }
+
+        .mini-report-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .mini-report-pill {
+            font-size: 12px;
+            font-weight: 800;
+            color: #93c5fd;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .mini-report-rating {
+            font-size: 11px;
+            font-weight: 800;
+            padding: 3px 9px;
+            border-radius: 999px;
+            background: rgba(52,211,153,0.15);
+            color: #34d399;
+        }
+
+        .mini-report-rating.rating-med {
+            background: rgba(251,191,36,0.15);
+            color: #fbbf24;
+        }
+        .mini-report-rating.rating-low {
+            background: rgba(239,68,68,0.15);
+            color: #f87171;
+        }
+
+        .accuracy-score-box {
+            padding: 16px 18px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(79,126,248,0.12), rgba(124,58,237,0.08));
+            border: 1px solid rgba(79,126,248,0.25);
+            margin-bottom: 14px;
+        }
+
+        .accuracy-num {
+            font-size: 38px;
+            font-weight: 900;
+            color: #60a5fa;
+            line-height: 1;
+        }
+
+        .accuracy-label {
+            font-size: 11px;
+            color: #94a3b8;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 4px;
+        }
+
+        .coaching-box {
+            padding: 14px 16px;
+            border-radius: 14px;
+            background: rgba(2,6,23,0.45);
+            border: 1px solid rgba(148,163,184,0.12);
+            margin-bottom: 14px;
+        }
+
+        .coaching-box.method-box {
+            background: rgba(79,126,248,0.07);
+            border-color: rgba(79,126,248,0.25);
+        }
+
+        .coaching-box.ideal-answer-box {
+            background: rgba(16,185,129,0.06);
+            border-color: rgba(52,211,153,0.25);
+        }
+
+        .coaching-box-title {
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .method-tag {
+            display: inline-block;
+            font-size: 13px;
+            font-weight: 800;
+            color: #93c5fd;
+            background: rgba(79,126,248,0.15);
+            padding: 4px 10px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .method-guide-text {
+            font-size: 13px;
+            color: #cbd5e1;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .ideal-answer-content {
+            font-size: 13px;
+            color: #e2e8f0;
+            line-height: 1.65;
+            white-space: pre-wrap;
+        }
+
+        .coach-bullets {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .coach-bullets li {
+            font-size: 12px;
+            line-height: 1.55;
+            padding: 3px 0;
+            color: #cbd5e1;
+        }
+        .coach-bullets.strengths-bullets li::before { content: "✓ "; color: #34d399; font-weight: 800; }
+        .coach-bullets.gaps-bullets li::before      { content: "→ "; color: #fb923c; font-weight: 800; }
+
+        .pace-badge-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            background: rgba(6,182,212,0.07);
+            border: 1px solid rgba(6,182,212,0.2);
+            border-radius: 10px;
+        }
+        .pace-badge-row strong { color: #67e8f9; }
+
+        .side-action-wrap {
+            margin-top: 18px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(148,163,184,0.1);
+        }
+
+        .side-next-btn {
+            width: 100%;
+            padding: 13px 18px;
+            border-radius: 12px;
+            border: none;
+            background: #4f7ef8;
+            color: white;
+            font-size: 14px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 8px 24px rgba(79,126,248,0.3);
+            text-align: center;
+        }
+
+        .side-next-btn:hover {
+            background: #3d6ef5;
+            transform: translateY(-1px);
+            box-shadow: 0 12px 28px rgba(79,126,248,0.45);
+        }
+
+        .side-action-sub {
+            font-size: 11px;
+            color: #64748b;
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        .finish-state {
+            display: none;
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .finish-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            animation: bounceIn 0.6s ease;
+        }
+
+        @keyframes bounceIn {
+            0%   { transform: scale(0.5); opacity: 0; }
+            70%  { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .finish-state h2 { font-size: 32px; margin-bottom: 8px; }
+        .finish-state p  { color: #94a3b8; margin-bottom: 24px; }
+
+        .score-reveal {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 32px;
+            border-radius: 16px;
+            background: rgba(79, 126, 248, 0.08);
+            border: 1px solid rgba(79, 126, 248, 0.2);
+            margin-bottom: 24px;
+        }
+
+        .score-reveal .score-num {
+            font-size: 52px;
+            font-weight: 800;
+            color: #60a5fa;
+        }
+
+        .score-reveal .score-label {
+            color: #94a3b8;
+            font-size: 13px;
+        }
+
+        .finish-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 1240px) {
+            .interview-grid.practice-mode { grid-template-columns: 1fr 410px; }
+            .interview-grid.practice-mode .left-panel { display: none; }
+        }
+
+        @media (max-width: 900px) {
+            .interview-grid { grid-template-columns: 1fr; }
+            .interview-grid.practice-mode { grid-template-columns: 1fr; }
+            .left-panel { display: none; }
+            .coaching-side-column {
+                position: static;
+                max-height: none;
+                margin-top: 20px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .interview-card { padding: 20px 16px; }
+            .question-text  { font-size: 21px; }
+            .action-row { flex-direction: column-reverse; }
+            .submit-btn, .finish-btn { width: 100%; }
+            .topbar-pills { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="interview-topbar">
+    <div class="topbar-brand">
+        <img src="/static/logo.svg" alt="IntervAI">
+        <span style="color:#f8fafc;font-weight:800;font-size:18px;letter-spacing:-0.02em;">IntervAI</span>
+    </div>
+
+    <div class="topbar-pills">
+        <span class="meta-pill" id="topRole">{{ROLE}}</span>
+        <span class="meta-pill" id="topLevel">{{LEVEL}}</span>
+        <span class="meta-pill" id="topType">{{INTERVIEW_TYPE}}</span>
+        <span id="topModePill" class="meta-pill">{{MODE}}</span>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:16px;">
+        <div class="topbar-timer" id="countdownTimer" style="display:none;"></div>
+        <span style="color:#64748b;font-size:13px;" id="sessionTimer">00:00</span>
+    </div>
+</header>
+
+<div class="interview-page">
+    <div class="interview-grid">
+
+        <aside class="left-panel">
+
+            <div class="ai-avatar-card">
+                <div class="avatar-ring" id="avatarRing">🤖</div>
+                <div class="avatar-name">IntervAI</div>
+                <div class="avatar-status" id="avatarStatus">Ready</div>
+            </div>
+
+            <div class="progress-card">
+                <div class="progress-label">
+                    <span id="progressLabel">Question 1</span>
+                    <span id="progressCount">0 answered</span>
+                </div>
+                <div class="progress-track">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="q-number-badge" id="qNumberBadge">Loading questions...</div>
+            </div>
+
+            <div id="hintSection" style="display:none;">
+                <button class="hint-trigger-btn" id="hintTriggerBtn" onclick="loadHint()">💡 Get approach hint</button>
+                <div class="hint-card" id="hintCard">
+                    <h4>💡 Interview Hack</h4>
+                    <p id="hintText"></p>
+                </div>
+            </div>
+
+        </aside>
+
+        <main class="right-panel">
+            <div class="interview-card">
+
+                <div id="loadingState" class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <h2>Preparing your interview...</h2>
+                    <p>IntervAI is analyzing your resume and job description.</p>
+                </div>
+
+                <div id="questionState">
+
+                    <div class="question-label">
+                        <span>Interviewer Question</span>
+                        <span id="qTypePill" class="q-type-pill"></span>
+                        <span id="qDiffPill" class="diff-pill"></span>
+                    </div>
+
+                    <h2 id="questionText" class="question-text"></h2>
+
+                    <button class="speak-q-btn" id="speakQBtn" type="button">
+                        🔊 Listen to question
+                    </button>
+
+                    <div class="answer-section">
+
+                        <div class="answer-top-row">
+                            <span>Your Answer</span>
+                            <div class="voice-controls">
+                                <button class="mic-btn idle" id="micBtn" type="button">🎙 Voice Input</button>
+                                <span class="answer-timer" id="answerTimer">00:00</span>
+                            </div>
+                        </div>
+
+                        <div class="live-transcript" id="liveTranscript">
+                            <span id="liveTranscriptText"></span><span class="live-interim" id="liveInterim"></span>
+                        </div>
+
+                        <textarea
+                            id="answerInput"
+                            class="answer-input"
+                            placeholder="Type your answer here, or click 'Voice Input' to speak..."
+                        ></textarea>
+
+                        <div class="word-count" id="wordCount">0 words</div>
+
+                        <div class="action-row">
+                            <button class="finish-btn" id="finishBtn" type="button">End Interview</button>
+                            <button class="submit-btn" id="submitBtn" type="button">Submit Answer →</button>
+                        </div>
+
+                        <div class="msg-bar" id="msgBar"></div>
+                    </div>
+
+                    <div id="practiceSubmittedNotice" style="display:none;padding:14px 18px;border-radius:14px;background:rgba(16,185,129,0.08);border:1px solid rgba(52,211,153,0.25);color:#34d399;font-size:13px;font-weight:700;margin-top:18px;text-align:center;">
+                        👉 Answer submitted! Your live Mini-Report is ready in the side column. Review the method and model answer before proceeding.
+                    </div>
+
+                </div>
+
+                <div id="finishState" class="finish-state">
+                    <div class="finish-icon">🎉</div>
+                    <h2>Interview Completed!</h2>
+                    <p>Your AI-powered performance report is ready.</p>
+
+                    <div class="score-reveal">
+                        <div class="score-num" id="finalScore">—</div>
+                        <div class="score-label">Overall Score / 100</div>
+                    </div>
+
+                    <div class="finish-actions">
+                        <a id="reportLink" class="btn btn-primary" href="/report/{{INTERVIEW_ID}}" style="text-decoration:none;">View Full Report →</a>
+                        <a class="btn btn-secondary" href="/interview-setup" style="text-decoration:none;">Practice Again</a>
+                        <a class="btn btn-secondary" href="/dashboard" style="text-decoration:none;">Dashboard</a>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <aside class="coaching-side-column" id="coachingSideColumn">
+            <div class="side-coach-header">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:18px;">🎓</span>
+                    <span style="font-size:14px;font-weight:800;color:#f8fafc;letter-spacing:-0.01em;">Practice Coach</span>
+                </div>
+                <span class="side-coach-badge" id="sideCoachBadge">Live Guidance</span>
+            </div>
+
+            <!-- IDLE STATE (Before Answer Submission) -->
+            <div id="coachIdleState" class="coach-idle-state">
+                <div class="coach-idle-banner">
+                    <div style="font-size:13px;font-weight:800;color:#34d399;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+                        <span>💡</span> Practice Mode Active
+                    </div>
+                    <p style="font-size:12px;color:#94a3b8;line-height:1.6;margin:0;">
+                        Answer the question on the left. Once submitted, your <strong>instant question mini-report</strong> will appear right here:
+                    </p>
+                    <ul class="idle-features-list">
+                        <li><strong>Accuracy & Quality Score</strong></li>
+                        <li><strong>🧠 Recommended Framework & Method</strong></li>
+                        <li><strong>🌟 What You Should Answer</strong> (ideal model response)</li>
+                        <li><strong>Detailed Strengths & Improvement Gaps</strong></li>
+                    </ul>
+                </div>
+
+                <div class="idle-tip-card" id="idleTipCard">
+                    <div style="font-size:11px;font-weight:800;color:#60a5fa;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px;">
+                        🎯 Strategy for this question type
+                    </div>
+                    <div id="idleTipText" style="font-size:13px;color:#cbd5e1;line-height:1.6;">
+                        Structure your response clearly: define the core challenge, state your approach, and conclude with the tangible impact or trade-offs.
+                    </div>
+                </div>
+            </div>
+
+            <!-- EVALUATED MINI-REPORT STATE (After Answer Submission) -->
+            <div id="coachReportState" class="coach-report-state" style="display:none;">
+                <div class="mini-report-title-row">
+                    <span class="mini-report-pill" id="miniReportQPill">Question 1 Mini-Report</span>
+                    <span class="mini-report-rating" id="miniReportRating">High Accuracy</span>
+                </div>
+
+                <!-- Accuracy Score Card -->
+                <div class="accuracy-score-box">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+                        <div>
+                            <div class="accuracy-num" id="miniReportScore">85%</div>
+                            <div class="accuracy-label">Answer Accuracy</div>
+                        </div>
+                        <div id="miniReportSubMetrics" style="text-align:right;"></div>
+                    </div>
+                </div>
+
+                <!-- Recommended Method & Framework -->
+                <div class="coaching-box method-box" id="coachMethodBox">
+                    <div class="coaching-box-title" style="color:#93c5fd;">
+                        <span>🧠</span> Recommended Method & Framework
+                    </div>
+                    <div class="method-tag" id="coachMethodName">STAR Framework</div>
+                    <p class="method-guide-text" id="coachMethodGuide"></p>
+                </div>
+
+                <!-- What You Should Answer (Ideal Model Response) -->
+                <div class="coaching-box ideal-answer-box" id="coachIdealAnswerBox">
+                    <div class="coaching-box-title" style="color:#34d399;">
+                        <span>🌟</span> What You Should Answer
+                    </div>
+                    <div class="ideal-answer-content" id="coachIdealAnswerText"></div>
+                </div>
+
+                <!-- Performance Breakdown (Strengths & Gaps) -->
+                <div class="coaching-box feedback-breakdown-box">
+                    <div class="coaching-box-title" style="color:#60a5fa;">
+                        <span>📊</span> Performance Breakdown
+                    </div>
+                    <div id="coachStrengthsBlock" style="margin-bottom:10px;">
+                        <div style="font-size:11px;font-weight:800;color:#34d399;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">✅ Key Strengths</div>
+                        <ul class="coach-bullets strengths-bullets" id="coachStrengthsList"></ul>
+                    </div>
+                    <div id="coachGapsBlock">
+                        <div style="font-size:11px;font-weight:800;color:#fb923c;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">⚠️ Areas to Refine / Missing Concepts</div>
+                        <ul class="coach-bullets gaps-bullets" id="coachGapsList"></ul>
+                    </div>
+                </div>
+
+                <!-- AI Critique / Feedback -->
+                <div class="coaching-box feedback-note-box" id="coachFeedbackNoteBox">
+                    <div class="coaching-box-title" style="color:#c4b5fd;">
+                        <span>💬</span> Interviewer Critique
+                    </div>
+                    <p id="coachFeedbackText" style="font-size:13px;color:#cbd5e1;line-height:1.6;margin:0;"></p>
+                </div>
+
+                <!-- Delivery Pace -->
+                <div class="pace-badge-row" id="coachPaceRow" style="display:none;">
+                    <span>⚡ Delivery Pace:</span>
+                    <strong id="coachPaceText">135 WPM · Good Pace</strong>
+                </div>
+
+                <!-- Action Button to Advance -->
+                <div class="side-action-wrap">
+                    <button class="side-next-btn" id="sideNextQBtn" type="button">
+                        Continue to Next Question →
+                    </button>
+                    <div class="side-action-sub">Your progress and mini-reports are saved for your review.</div>
+                </div>
+            </div>
+        </aside>
+
+    </div>
+</div>
+
+<script>
+const INTERVIEW_ID   = "{{INTERVIEW_ID}}";
+const INTERVIEW_MODE = "{{MODE}}";
+const IS_PRACTICE    = INTERVIEW_MODE.toLowerCase().includes("practice");
+const IS_REAL        = !IS_PRACTICE;
+const QUESTION_TIME_LIMIT = IS_REAL ? 180 : 0;
+
+const topModePill = document.getElementById("topModePill");
+if (IS_PRACTICE) {
+    topModePill.classList.add("practice");
+} else {
+    topModePill.classList.add("real");
+}
+
+let state = {
+    currentQuestionId: null,
+    currentQuestionNum: 0,
+    answeredCount: 0,
+    totalQuestions: 6,
+    isSubmitting: false,
+    waitingForNext: false,
+    answerStartTime: null,
+    answerTimerInterval: null,
+    sessionStartTime: Date.now(),
+    sessionTimerInterval: null,
+    countdownInterval: null,
+    isRecording: false,
+    isSpeaking: false,
+    spokenUsed: false,
+    baseText: "",
+    finalTranscript: "",
+    interimTranscript: "",
+    autoRestartCount: 0,
+    recognizer: null,
+    userStoppedRecording: false,
+};
+
+const MAX_AUTO_RESTARTS = 5;
+
+const els = {
+    interviewGrid:           document.querySelector(".interview-grid"),
+    loading:                 document.getElementById("loadingState"),
+    questionState:           document.getElementById("questionState"),
+    finishState:             document.getElementById("finishState"),
+    questionText:            document.getElementById("questionText"),
+    qTypePill:               document.getElementById("qTypePill"),
+    qDiffPill:               document.getElementById("qDiffPill"),
+    progressLabel:           document.getElementById("progressLabel"),
+    progressCount:           document.getElementById("progressCount"),
+    progressFill:            document.getElementById("progressFill"),
+    qNumberBadge:            document.getElementById("qNumberBadge"),
+    answerInput:             document.getElementById("answerInput"),
+    wordCount:               document.getElementById("wordCount"),
+    submitBtn:               document.getElementById("submitBtn"),
+    finishBtn:               document.getElementById("finishBtn"),
+    msgBar:                  document.getElementById("msgBar"),
+    micBtn:                  document.getElementById("micBtn"),
+    speakQBtn:               document.getElementById("speakQBtn"),
+    liveTranscript:          document.getElementById("liveTranscript"),
+    liveText:                document.getElementById("liveTranscriptText"),
+    liveInterim:             document.getElementById("liveInterim"),
+    answerTimer:             document.getElementById("answerTimer"),
+    sessionTimer:            document.getElementById("sessionTimer"),
+    countdownTimer:          document.getElementById("countdownTimer"),
+    avatarRing:              document.getElementById("avatarRing"),
+    avatarStatus:            document.getElementById("avatarStatus"),
+    finalScore:              document.getElementById("finalScore"),
+    reportLink:              document.getElementById("reportLink"),
+    hintSection:             document.getElementById("hintSection"),
+    hintCard:                document.getElementById("hintCard"),
+    hintText:                document.getElementById("hintText"),
+    hintTriggerBtn:          document.getElementById("hintTriggerBtn"),
+    practiceSubmittedNotice: document.getElementById("practiceSubmittedNotice"),
+    coachingSideColumn:      document.getElementById("coachingSideColumn"),
+    sideCoachBadge:          document.getElementById("sideCoachBadge"),
+    coachIdleState:          document.getElementById("coachIdleState"),
+    idleTipText:             document.getElementById("idleTipText"),
+    coachReportState:        document.getElementById("coachReportState"),
+    miniReportQPill:         document.getElementById("miniReportQPill"),
+    miniReportRating:        document.getElementById("miniReportRating"),
+    miniReportScore:         document.getElementById("miniReportScore"),
+    miniReportSubMetrics:    document.getElementById("miniReportSubMetrics"),
+    coachMethodBox:          document.getElementById("coachMethodBox"),
+    coachMethodName:         document.getElementById("coachMethodName"),
+    coachMethodGuide:        document.getElementById("coachMethodGuide"),
+    coachIdealAnswerBox:     document.getElementById("coachIdealAnswerBox"),
+    coachIdealAnswerText:    document.getElementById("coachIdealAnswerText"),
+    coachStrengthsBlock:     document.getElementById("coachStrengthsBlock"),
+    coachStrengthsList:      document.getElementById("coachStrengthsList"),
+    coachGapsBlock:          document.getElementById("coachGapsBlock"),
+    coachGapsList:           document.getElementById("coachGapsList"),
+    coachFeedbackNoteBox:    document.getElementById("coachFeedbackNoteBox"),
+    coachFeedbackText:       document.getElementById("coachFeedbackText"),
+    coachPaceRow:            document.getElementById("coachPaceRow"),
+    coachPaceText:           document.getElementById("coachPaceText"),
+    sideNextQBtn:            document.getElementById("sideNextQBtn"),
+};
+
+if (IS_PRACTICE) {
+    if (els.interviewGrid) els.interviewGrid.classList.add("practice-mode");
+    if (els.hintSection) els.hintSection.style.display = "block";
+}
+
+const synth = window.speechSynthesis;
+
+function speakText(text, onEnd) {
+    if (!synth) return;
+    stopSpeaking();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate  = 0.92;
+    utterance.pitch = 1.05;
+
+    utterance.onstart = () => {
+        state.isSpeaking = true;
+        els.avatarRing.classList.add("speaking");
+        setAvatarStatus("Asking question...", "active");
+        els.speakQBtn.textContent = "⏹ Stop Audio";
+        els.speakQBtn.classList.add("playing");
+    };
+
+    const finish = () => {
+        state.isSpeaking = false;
+        els.avatarRing.classList.remove("speaking");
+        setAvatarStatus("Listening for your answer", "listening");
+        els.speakQBtn.textContent = "🔊 Listen to question";
+        els.speakQBtn.classList.remove("playing");
+        if (onEnd) onEnd();
+    };
+
+    utterance.onend   = finish;
+    utterance.onerror = finish;
+    synth.speak(utterance);
+}
+
+function stopSpeaking() {
+    if (synth && (synth.speaking || synth.pending)) {
+        try { synth.cancel(); } catch(e) {}
+    }
+    state.isSpeaking = false;
+    els.avatarRing.classList.remove("speaking");
+    els.speakQBtn.textContent = "🔊 Listen to question";
+    els.speakQBtn.classList.remove("playing");
+}
+
+els.speakQBtn.addEventListener("click", () => {
+    if (state.isSpeaking) {
+        stopSpeaking();
+    } else {
+        const txt = els.questionText.textContent.trim();
+        if (txt) speakText(txt);
+    }
+});
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+function setMicUI(s) {
+    els.micBtn.className = "mic-btn " + s;
+    if (s === "active") {
+        els.micBtn.textContent = "🔴 Recording... (tap to stop)";
+        els.liveTranscript.classList.add("show");
+        setAvatarStatus("Listening...", "listening");
+    } else if (s === "starting") {
+        els.micBtn.textContent = "⏳ Starting mic...";
+    } else {
+        els.micBtn.textContent = "🎙 Voice Input";
+        setAvatarStatus("Ready", "");
+    }
+}
+
+function updateTranscriptDisplay() {
+    const full = state.finalTranscript.trim();
+    const interim = state.interimTranscript.trim();
+    els.liveText.textContent = full ? full + " " : "";
+    els.liveInterim.textContent = interim;
+
+    const combined = (state.baseText + " " + full + " " + interim).trim();
+    els.answerInput.value = combined;
+    els.answerInput.scrollTop = els.answerInput.scrollHeight;
+    updateWordCount();
+}
+
+function stopRecording() {
+    state.userStoppedRecording = true;
+    state.isRecording = false;
+    if (state.recognizer) {
+        try { state.recognizer.stop(); } catch(e) {}
+        state.recognizer = null;
+    }
+    setMicUI("idle");
+    state.baseText = (els.answerInput.value || "").trim();
+    state.finalTranscript = "";
+    state.interimTranscript = "";
+    els.liveInterim.textContent = "";
+}
+
+function startRecognition() {
+    if (!SpeechRecognition) {
+        showMsg("Speech recognition not supported. Use Chrome or Edge, or type your answer.", "error");
+        return;
+    }
+    if (state.recognizer) { try { state.recognizer.abort(); } catch(e){} state.recognizer = null; }
+
+    setMicUI("starting");
+    stopSpeaking();
+
+    try {
+        const rec = new SpeechRecognition();
+        rec.continuous      = true;
+        rec.interimResults  = true;
+        rec.lang            = "en-US";
+        rec.maxAlternatives = 1;
+
+        rec.onstart = () => {
+            state.isRecording = true;
+            state.spokenUsed  = true;
+            setMicUI("active");
+            showMsg("🎙 Microphone active. Speak clearly — your words appear in real time.", "info");
+        };
+
+        rec.onresult = (event) => {
+            let finals = "", interims = "";
+            for (let i = 0; i < event.results.length; i++) {
+                const r = event.results[i];
+                if (r.isFinal) finals  += r[0].transcript + " ";
+                else           interims += r[0].transcript;
+            }
+            state.finalTranscript   = finals;
+            state.interimTranscript = interims;
+            updateTranscriptDisplay();
+        };
+
+        rec.onerror = (event) => {
+            const err = event.error;
+            if (err === "no-speech") return;
+            state.userStoppedRecording = true;
+            state.isRecording = false;
+            setMicUI("idle");
+            if (err === "not-allowed" || err === "service-not-allowed") {
+                showMsg("Microphone access denied. Allow mic in browser settings.", "error");
+            } else if (err === "audio-capture") {
+                showMsg("No microphone detected. Check audio settings.", "error");
+            } else if (err !== "aborted") {
+                showMsg("Mic error: " + err + ". You can type your answer.", "error");
+            }
+        };
+
+        rec.onend = () => {
+            if (!state.userStoppedRecording && state.isRecording && state.autoRestartCount < MAX_AUTO_RESTARTS) {
+                state.autoRestartCount++;
+                state.baseText = (els.answerInput.value || "").trim();
+                state.finalTranscript = "";
+                state.interimTranscript = "";
+                state.recognizer = null;
+                try { startRecognition(); return; } catch(e) {}
+            }
+            state.isRecording = false;
+            state.userStoppedRecording = true;
+            setMicUI("idle");
+            state.recognizer = null;
+            state.baseText = (els.answerInput.value || "").trim();
+            state.finalTranscript = "";
+            state.interimTranscript = "";
+        };
+
+        state.recognizer = rec;
+        rec.start();
+
+    } catch(e) {
+        state.isRecording = false;
+        setMicUI("idle");
+        showMsg("Could not start microphone: " + (e.message || e), "error");
+    }
+}
+
+els.micBtn.addEventListener("click", () => {
+    if (state.isRecording) {
+        stopRecording();
+        showMsg("Recording stopped. Review your text and submit.", "success");
+    } else {
+        state.userStoppedRecording = false;
+        state.autoRestartCount = 0;
+        state.baseText = (els.answerInput.value || "").trim();
+        state.finalTranscript = "";
+        state.interimTranscript = "";
+        startRecognition();
+    }
+});
+
+function startAnswerTimer() {
+    clearInterval(state.answerTimerInterval);
+    state.answerStartTime = Date.now();
+    els.answerTimer.textContent = "00:00";
+    state.answerTimerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - state.answerStartTime) / 1000);
+        const m = String(Math.floor(elapsed / 60)).padStart(2, "0");
+        const s = String(elapsed % 60).padStart(2, "0");
+        els.answerTimer.textContent = m + ":" + s;
+    }, 1000);
+}
+
+function stopAnswerTimer() {
+    clearInterval(state.answerTimerInterval);
+    if (!state.answerStartTime) return 0;
+    return Math.max(0, Math.floor((Date.now() - state.answerStartTime) / 1000));
+}
+
+function startSessionTimer() {
+    clearInterval(state.sessionTimerInterval);
+    state.sessionTimerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - state.sessionStartTime) / 1000);
+        const m = String(Math.floor(elapsed / 60)).padStart(2, "0");
+        const s = String(elapsed % 60).padStart(2, "0");
+        els.sessionTimer.textContent = m + ":" + s;
+    }, 1000);
+}
+
+function startCountdown(limitSecs) {
+    if (!limitSecs) return;
+    els.countdownTimer.style.display = "block";
+    clearInterval(state.countdownInterval);
+
+    state.countdownInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - state.answerStartTime) / 1000);
+        const remaining = limitSecs - elapsed;
+        if (remaining <= 0) {
+            clearInterval(state.countdownInterval);
+            els.countdownTimer.textContent = "TIME UP";
+            submitAnswer(true);
+            return;
+        }
+        const m = String(Math.floor(remaining / 60)).padStart(2, "0");
+        const s = String(remaining % 60).padStart(2, "0");
+        els.countdownTimer.textContent = m + ":" + s;
+
+        els.countdownTimer.className = "topbar-timer";
+        if (remaining <= 15)      els.countdownTimer.classList.add("danger");
+        else if (remaining <= 45) els.countdownTimer.classList.add("warning");
+    }, 500);
+}
+
+function stopCountdown() {
+    clearInterval(state.countdownInterval);
+    els.countdownTimer.style.display = "none";
+    els.countdownTimer.className = "topbar-timer";
+}
+
+function setAvatarStatus(text, cls) {
+    els.avatarStatus.textContent = text;
+    els.avatarStatus.className = "avatar-status" + (cls ? " " + cls : "");
+}
+
+function showMsg(text, type) {
+    els.msgBar.textContent = text;
+    els.msgBar.className   = "msg-bar " + type;
+    els.msgBar.style.display = "block";
+}
+
+function hideMsg() { els.msgBar.style.display = "none"; }
+
+function updateWordCount() {
+    const words = (els.answerInput.value.trim().split(/\s+/).filter(Boolean)).length;
+    els.wordCount.textContent = words + " words";
+}
+
+els.answerInput.addEventListener("input", updateWordCount);
+
+function updateProgress() {
+    const pct = Math.min(100, (state.answeredCount / Math.max(state.totalQuestions, 1)) * 100);
+    els.progressFill.style.width = pct + "%";
+    els.progressLabel.textContent = "Question " + state.currentQuestionNum;
+    els.progressCount.textContent = state.answeredCount + " answered";
+    els.qNumberBadge.textContent  = "Q" + state.currentQuestionNum + " of " + state.totalQuestions;
+}
+
+function setDiffPill(diff) {
+    els.qDiffPill.textContent  = diff || "Standard";
+    els.qDiffPill.className    = "diff-pill diff-" + (diff || "Intermediate");
+}
+
+async function loadQuestion() {
+    hideMsg();
+    stopSpeaking();
+    stopRecording();
+    stopCountdown();
+    state.waitingForNext = false;
+    state.hintLoaded     = false;
+
+    if (els.practiceSubmittedNotice) els.practiceSubmittedNotice.style.display = "none";
+    if (els.coachReportState) els.coachReportState.style.display = "none";
+    if (els.coachIdleState) els.coachIdleState.style.display = "block";
+    if (els.sideCoachBadge) els.sideCoachBadge.textContent = "Live Guidance";
+    els.submitBtn.style.display = "inline-flex";
+
+    try {
+        const res  = await fetch("/api/interview/" + INTERVIEW_ID + "/current-question");
+        const data = await res.json();
+
+        if (!res.ok || !data.success) throw new Error(data.message || "Could not load question.");
+
+        if (data.finished) {
+            await finishInterview(false);
+            return;
+        }
+
+        const q = data.question;
+        state.currentQuestionId  = q.id;
+        state.currentQuestionNum = q.number;
+        state.answeredCount      = Number(data.answered_count ?? state.answeredCount);
+        state.totalQuestions     = Math.max(Number(data.total_questions ?? state.totalQuestions), state.answeredCount + 1);
+
+        els.questionText.textContent = q.text;
+        els.qTypePill.textContent    = q.type  || "Interview";
+        setDiffPill(q.difficulty);
+
+        if (IS_PRACTICE && els.idleTipText) {
+            const hint = questionHints[q.type] || questionHints["Mixed"] || "Structure your answer: core solution → engineering trade-offs → real-world results.";
+            els.idleTipText.textContent = hint;
+        }
+
+        els.answerInput.value = "";
+        els.answerInput.disabled = false;
+        state.baseText = "";
+        state.finalTranscript = "";
+        state.interimTranscript = "";
+        els.liveTranscript.classList.remove("show");
+        els.liveText.textContent = "";
+        els.liveInterim.textContent = "";
+        updateWordCount();
+
+        els.submitBtn.disabled   = false;
+        els.submitBtn.textContent = "Submit Answer →";
+
+        els.loading.style.display       = "none";
+        els.finishState.style.display   = "none";
+        els.questionState.style.display = "block";
+
+        updateProgress();
+        startAnswerTimer();
+        startSessionTimer();
+
+        if (IS_REAL) startCountdown(QUESTION_TIME_LIMIT);
+
+        setAvatarStatus("Asking question...", "active");
+
+        setTimeout(() => {
+            speakText(q.text, () => {
+                setAvatarStatus("Listening for your answer", "listening");
+            });
+        }, 400);
+
+        els.answerInput.focus();
+
+    } catch(err) {
+        els.loading.style.display       = "none";
+        els.questionState.style.display = "block";
+        showMsg(err.message || "Could not load question.", "error");
+    }
+}
+
+async function submitAnswer(autoSubmitted) {
+    hideMsg();
+    stopSpeaking();
+    stopRecording();
+    stopCountdown();
+
+    if (state.isSubmitting) return;
+
+    const answer = els.answerInput.value.trim();
+    if (!answer && !autoSubmitted) {
+        showMsg("Please provide an answer before submitting.", "error");
+        els.answerInput.focus();
+        return;
+    }
+
+    const duration = stopAnswerTimer();
+
+    state.isSubmitting = true;
+    els.submitBtn.disabled   = true;
+    els.submitBtn.textContent = "Evaluating with AI...";
+    els.answerInput.disabled  = true;
+    setAvatarStatus("Evaluating your answer...", "active");
+    els.avatarRing.classList.add("speaking");
+
+    try {
+        const res = await fetch("/api/interview/" + INTERVIEW_ID + "/answer", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                question_id:     state.currentQuestionId,
+                answer_text:     answer || "(No answer provided — time expired.)",
+                duration_seconds: duration,
+                input_mode:      state.spokenUsed ? "voice" : "typed",
+            })
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.message || "Could not save answer.");
+
+        state.answeredCount = Number(data.answered_count ?? (state.answeredCount + 1));
+        state.totalQuestions = Number(data.total_questions ?? state.totalQuestions);
+        state.spokenUsed = false;
+        state.isSubmitting = false;
+        els.avatarRing.classList.remove("speaking");
+
+        if (IS_PRACTICE) {
+            renderPracticeMiniReport(data.evaluation, data.wpm, data.finished);
+            els.submitBtn.style.display = "none";
+            if (els.practiceSubmittedNotice) els.practiceSubmittedNotice.style.display = "block";
+            setAvatarStatus("Mini-Report ready in side column", "active");
+        } else {
+            if (data.finished) {
+                await finishInterview(true, data.evaluation?.score);
+            } else {
+                showMsg("Answer evaluated! Loading next question...", "success");
+                setTimeout(loadQuestion, 1200);
+            }
+        }
+
+        updateProgress();
+
+    } catch(err) {
+        state.isSubmitting = false;
+        els.avatarRing.classList.remove("speaking");
+        els.submitBtn.disabled = false;
+        els.submitBtn.textContent = "Submit Answer →";
+        els.answerInput.disabled  = false;
+        showMsg(err.message || "Could not save answer. Try again.", "error");
+    }
+}
+
+function renderPracticeMiniReport(evaluation, wpm, isFinished) {
+    if (!evaluation) return;
+
+    if (els.coachIdleState) els.coachIdleState.style.display = "none";
+    if (els.coachReportState) els.coachReportState.style.display = "block";
+    if (els.sideCoachBadge) els.sideCoachBadge.textContent = "Mini-Report";
+
+    if (els.miniReportQPill) {
+        els.miniReportQPill.textContent = "Question " + state.currentQuestionNum + " Mini-Report";
+    }
+
+    const score = Number(evaluation.score ?? 0);
+    if (els.miniReportScore) {
+        els.miniReportScore.textContent = Math.round(score) + "%";
+    }
+
+    if (els.miniReportRating) {
+        if (score >= 80) {
+            els.miniReportRating.textContent = "High Accuracy";
+            els.miniReportRating.className = "mini-report-rating";
+        } else if (score >= 55) {
+            els.miniReportRating.textContent = "Solid Attempt";
+            els.miniReportRating.className = "mini-report-rating rating-med";
+        } else {
+            els.miniReportRating.textContent = "Needs Refinement";
+            els.miniReportRating.className = "mini-report-rating rating-low";
+        }
+    }
+
+    if (els.miniReportSubMetrics) {
+        let subHtml = "";
+        if (evaluation.technical_accuracy !== undefined && evaluation.technical_accuracy !== null) {
+            subHtml += `<span style="font-size:11px;color:#94a3b8;">Tech: <strong style="color:#e2e8f0;">${Math.round(evaluation.technical_accuracy)}%</strong></span> `;
+        }
+        if (evaluation.clarity !== undefined && evaluation.clarity !== null) {
+            subHtml += `<span style="font-size:11px;color:#94a3b8;margin-left:8px;">Clarity: <strong style="color:#e2e8f0;">${Math.round(evaluation.clarity)}%</strong></span> `;
+        }
+        if (evaluation.problem_solving !== undefined && evaluation.problem_solving !== null) {
+            subHtml += `<span style="font-size:11px;color:#94a3b8;margin-left:8px;">Logic: <strong style="color:#e2e8f0;">${Math.round(evaluation.problem_solving)}%</strong></span>`;
+        }
+        els.miniReportSubMetrics.innerHTML = subHtml;
+    }
+
+    const method = evaluation.recommended_method || "Structured Problem Decomposition";
+    const methodGuide = evaluation.method_guide || "Define the problem, explain trade-offs, and state your concrete recommendation.";
+    if (els.coachMethodName) els.coachMethodName.textContent = method;
+    if (els.coachMethodGuide) els.coachMethodGuide.textContent = methodGuide;
+
+    const idealAnswer = evaluation.what_to_answer || evaluation.feedback || "Address core architecture, real-world constraints, and error handling.";
+    if (els.coachIdealAnswerText) els.coachIdealAnswerText.textContent = idealAnswer;
+
+    const strengths = Array.isArray(evaluation.strengths) ? evaluation.strengths : [];
+    if (els.coachStrengthsList) {
+        if (strengths.length > 0) {
+            els.coachStrengthsList.innerHTML = strengths.map(s => `<li>${escapeHTML(s)}</li>`).join("");
+            if (els.coachStrengthsBlock) els.coachStrengthsBlock.style.display = "block";
+        } else {
+            if (els.coachStrengthsBlock) els.coachStrengthsBlock.style.display = "none";
+        }
+    }
+
+    const gaps = Array.isArray(evaluation.improvements) ? evaluation.improvements : [];
+    const missing = Array.isArray(evaluation.missing_concepts) ? evaluation.missing_concepts : [];
+    const combinedGaps = [...gaps, ...missing].slice(0, 5);
+    if (els.coachGapsList) {
+        if (combinedGaps.length > 0) {
+            els.coachGapsList.innerHTML = combinedGaps.map(g => `<li>${escapeHTML(g)}</li>`).join("");
+            if (els.coachGapsBlock) els.coachGapsBlock.style.display = "block";
+        } else {
+            if (els.coachGapsBlock) els.coachGapsBlock.style.display = "none";
+        }
+    }
+
+    const feedback = evaluation.feedback || "";
+    if (els.coachFeedbackText && els.coachFeedbackNoteBox) {
+        if (feedback) {
+            els.coachFeedbackText.textContent = feedback;
+            els.coachFeedbackNoteBox.style.display = "block";
+        } else {
+            els.coachFeedbackNoteBox.style.display = "none";
+        }
+    }
+
+    if (els.coachPaceRow && els.coachPaceText) {
+        if (wpm) {
+            const paceDesc = wpm > 180 ? "(Fast pace — pause for clarity)" : wpm < 85 ? "(Deliberate pace)" : "(Optimal pace)";
+            els.coachPaceText.textContent = `${Math.round(wpm)} WPM ${paceDesc}`;
+            els.coachPaceRow.style.display = "flex";
+        } else {
+            els.coachPaceRow.style.display = "none";
+        }
+    }
+
+    if (els.sideNextQBtn) {
+        if (isFinished) {
+            els.sideNextQBtn.textContent = "View Practice Coaching Dossier →";
+            els.sideNextQBtn.onclick = () => finishInterview(true, evaluation.score);
+        } else {
+            els.sideNextQBtn.textContent = "Continue to Next Question →";
+            els.sideNextQBtn.onclick = () => loadQuestion();
+        }
+    }
+
+    if (window.innerWidth <= 900 && els.coachingSideColumn) {
+        els.coachingSideColumn.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+}
+
+function escapeHTML(str) {
+    return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+
+const questionHints = {
+    "Technical":     "Break the problem down step by step. Mention time/space complexity if relevant. Talk through your reasoning — interviewers care more about HOW you think than the perfect answer.",
+    "HR":            "Be genuine and specific. Use real examples. Align your answer with the company's values. The STAR method (Situation, Task, Action, Result) works great here.",
+    "Behavioral":    "Use the CAR method: Context → Action → Result. Be specific, use numbers when possible ('improved performance by 30%'). Avoid vague answers.",
+    "System Design": "Start by clarifying requirements. Think out loud. Cover: high-level design → components → database → scalability → failure cases. Don't rush into details.",
+    "Case Study":    "Structure your thinking: understand the problem → hypothesize → analyze → recommend. Ask clarifying questions before jumping to solutions.",
+    "Mixed":         "Listen carefully to understand the type of question. For behavioral: use STAR. For technical: show your thought process. For HR: be genuine and specific.",
+};
+
+function loadHint() {
+    const qType = els.qTypePill.textContent || "Mixed";
+    const hint = questionHints[qType] || questionHints["Mixed"];
+    els.hintText.textContent = hint;
+    els.hintCard.classList.add("show");
+    els.hintTriggerBtn.style.display = "none";
+}
+
+function resetHint() {
+    els.hintCard.classList.remove("show");
+    els.hintTriggerBtn.style.display = "block";
+}
+
+async function finishInterview(autoFinish, approxScore) {
+    stopSpeaking();
+    stopRecording();
+    stopCountdown();
+    clearInterval(state.sessionTimerInterval);
+
+    els.questionState.style.display = "none";
+    els.loading.style.display       = "block";
+    document.querySelector(".loading-state h2").textContent = "Generating your report...";
+    document.querySelector(".loading-state p").textContent  = "AI is analyzing all your answers. This takes a few seconds.";
+    setAvatarStatus("Generating report...", "active");
+
+    try {
+        const res  = await fetch("/api/interview/" + INTERVIEW_ID + "/finish", { method: "POST" });
+        const data = await res.json();
+
+        const score = data.report?.overall_score ?? approxScore ?? "—";
+
+        els.loading.style.display       = "none";
+        els.finishState.style.display   = "block";
+        els.finalScore.textContent      = typeof score === "number" ? Math.round(score) : score;
+        els.reportLink.href             = "/report/" + INTERVIEW_ID;
+
+        if (IS_PRACTICE) {
+            const h2 = document.querySelector(".finish-state h2");
+            const p = document.querySelector(".finish-state p");
+            const scoreLabel = document.querySelector(".score-reveal .score-label");
+            if (h2) h2.textContent = "Practice Session Completed!";
+            if (p) p.textContent = "Your question mini-reports and coaching history are compiled into your Practice Dossier.";
+            if (scoreLabel) scoreLabel.textContent = "Average Accuracy / 100";
+            if (els.reportLink) els.reportLink.textContent = "Open Practice Dossier & History →";
+        }
+
+        setAvatarStatus("Interview complete!", "active");
+
+    } catch(err) {
+        els.loading.style.display       = "none";
+        els.finishState.style.display   = "block";
+        els.finalScore.textContent      = approxScore ? Math.round(approxScore) : "—";
+        els.reportLink.href             = "/report/" + INTERVIEW_ID;
+    }
+}
+
+els.submitBtn.addEventListener("click", () => submitAnswer(false));
+
+els.finishBtn.addEventListener("click", () => {
+    const confirmed = confirm("Are you sure you want to end the interview early? Your progress will be saved.");
+    if (confirmed) finishInterview(true);
+});
+
+els.answerInput.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        e.preventDefault();
+        submitAnswer(false);
+    }
+});
+
+window.addEventListener("beforeunload", () => {
+    stopSpeaking();
+    stopRecording();
+});
+
+startSessionTimer();
+loadQuestion();
+</script>
+</body>
+</html>

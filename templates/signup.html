@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account | IntervAI</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .security-strip {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding: 8px 14px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            background: rgba(34, 197, 94, 0.05);
+            border: 1px solid rgba(34, 197, 94, 0.15);
+            font-size: 12px;
+            color: #86efac;
+            text-align: center;
+        }
+        .security-strip span {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .strength-meter-wrap {
+            margin-top: 6px;
+        }
+        .strength-bar-bg {
+            height: 4px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .strength-bar-fill {
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease, background-color 0.3s ease;
+        }
+        .strength-label {
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+
+<body class="auth-page">
+
+    <header class="navbar">
+        <a href="/" class="brand">
+            <img src="/static/logo.svg" class="brand-logo" alt="IntervAI">
+            <span class="brand-name">IntervAI</span>
+        </a>
+
+        <div class="nav-actions">
+            <a href="/" class="nav-btn">Home</a>
+            <a href="/login" class="nav-btn">Sign In</a>
+        </div>
+    </header>
+
+    <main class="auth-main">
+
+        <section class="auth-copy">
+
+            <div class="auth-badge">
+                <span>✦</span>
+                Verified Account Creation
+            </div>
+
+            <h1>
+                Create Your Account.
+                <span class="gradient-text">Genuine &amp; Secure.</span>
+            </h1>
+
+            <p>
+                Sign up to start realistic AI mock interviews. Our platform reads your resume
+                and job description to target your exact skill gaps with adaptive questioning.
+            </p>
+
+            <div class="auth-trust">
+                <div class="trust-item">Verified Identity &amp; Anti-Spam Protected</div>
+                <div class="trust-item">High-Fidelity Role &amp; Level Grounded Question Sets</div>
+                <div class="trust-item">Detailed Analytics: Technical, Communication, Pace &amp; Approach</div>
+            </div>
+
+        </section>
+
+        <section class="auth-card glass-card">
+
+            <div class="auth-logo">
+                <img src="/static/logo.svg" alt="IntervAI logo">
+            </div>
+
+            <h2>Create Account</h2>
+
+            <p class="auth-subtitle">
+                Get started with your personalized AI interview workspace.
+            </p>
+
+            <div class="security-strip">
+                <span>🛡️ Anti-Fraud Validation</span>
+                <span>•</span>
+                <span>🔒 Secure Bcrypt Storage</span>
+            </div>
+
+            <div id="errorMessage" class="auth-error"></div>
+            <div id="successMessage" class="auth-success"></div>
+
+            <form id="signupForm" class="auth-form" autocomplete="on">
+
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input
+                        id="name"
+                        name="name"
+                        type="text"
+                        class="auth-input"
+                        placeholder="Enter your name"
+                        autocomplete="name"
+                        required
+                    >
+                    <div id="nameFeedback" class="input-feedback"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input
+                        id="email"
+                        name="email"
+                        type="email"
+                        class="auth-input"
+                        placeholder="name@example.com"
+                        autocomplete="email"
+                        required
+                    >
+                    <div id="emailFeedback" class="input-feedback"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input
+                        id="password"
+                        name="password"
+                        type="password"
+                        class="auth-input"
+                        placeholder="Create a password (min. 8 characters)"
+                        autocomplete="new-password"
+                        minlength="8"
+                        required
+                    >
+                    <div class="strength-meter-wrap">
+                        <div class="strength-bar-bg">
+                            <div id="strengthBar" class="strength-bar-fill"></div>
+                        </div>
+                        <div class="strength-label">
+                            <span id="strengthText">Password Strength</span>
+                            <span id="strengthAdvice">Min. 8 chars, mix letters &amp; numbers</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn" class="btn btn-primary btn-full">
+                    Create Account
+                </button>
+
+            </form>
+
+            <div class="auth-footer">
+                Already registered?
+                <a href="/login">Sign In</a>
+            </div>
+
+        </section>
+
+    </main>
+
+    <script>
+const form = document.getElementById("signupForm");
+        const errorMessage = document.getElementById("errorMessage");
+        const successMessage = document.getElementById("successMessage");
+        const submitBtn = document.getElementById("submitBtn");
+
+        const nameInput = document.getElementById("name");
+        const nameFeedback = document.getElementById("nameFeedback");
+
+        const emailInput = document.getElementById("email");
+        const emailFeedback = document.getElementById("emailFeedback");
+
+        const passwordInput = document.getElementById("password");
+        const strengthBar = document.getElementById("strengthBar");
+        const strengthText = document.getElementById("strengthText");
+
+        const DISPOSABLE_DOMAINS = [
+            "tempmail.com", "mailinator.com", "10minutemail.com", "guerrillamail.com",
+            "yopmail.com", "throwawaymail.com", "sharklasers.com", "trashmail.com",
+            "fake.com", "test.com", "dispostable.com", "getairmail.com", "maildrop.cc",
+            "inboxkitten.com", "mohmal.com"
+        ];
+
+        nameInput.addEventListener("blur", function() {
+            const val = nameInput.value.trim();
+            const parts = val.split(/\s+/).filter(Boolean);
+            if (parts.length < 2) {
+                nameFeedback.textContent = "Please enter your genuine full name (First and Last name).";
+                nameFeedback.className = "input-feedback invalid";
+            } else if (val.length < 4 || /^[0-9]+$/.test(val) || /^(test|asdf|admin|user)$/i.test(val)) {
+                nameFeedback.textContent = "Please provide a valid legal name.";
+                nameFeedback.className = "input-feedback invalid";
+            } else {
+                nameFeedback.style.display = "none";
+            }
+        });
+
+        emailInput.addEventListener("blur", function() {
+            const val = emailInput.value.trim().toLowerCase();
+            if (!val.includes("@") || !val.includes(".")) {
+                emailFeedback.textContent = "Please enter a valid email address.";
+                emailFeedback.className = "input-feedback invalid";
+                return;
+            }
+            const domain = val.split("@")[1];
+            if (DISPOSABLE_DOMAINS.includes(domain)) {
+                emailFeedback.textContent = "Disposable / temporary emails are blocked. Please use a genuine email.";
+                emailFeedback.className = "input-feedback invalid";
+            } else {
+                emailFeedback.style.display = "none";
+            }
+        });
+
+        passwordInput.addEventListener("input", function() {
+            const pwd = passwordInput.value;
+            let score = 0;
+            if (pwd.length >= 8) score++;
+            if (pwd.length >= 12) score++;
+            if (/[A-Z]/.test(pwd) && /[a-z]/.test(pwd)) score++;
+            if (/[0-9]/.test(pwd)) score++;
+            if (/[^A-Za-z0-9]/.test(pwd)) score++;
+
+            if (score <= 1) {
+                strengthBar.style.width = "25%";
+                strengthBar.style.backgroundColor = "#ef4444";
+                strengthText.textContent = "Weak (needs numbers & letters)";
+            } else if (score <= 3) {
+                strengthBar.style.width = "60%";
+                strengthBar.style.backgroundColor = "#f59e0b";
+                strengthText.textContent = "Moderate (good, add symbols to improve)";
+            } else {
+                strengthBar.style.width = "100%";
+                strengthBar.style.backgroundColor = "#22c55e";
+                strengthText.textContent = "Strong password";
+            }
+        });
+
+        form.addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            errorMessage.style.display = "none";
+            successMessage.style.display = "none";
+
+            const nameVal = nameInput.value.trim();
+            const parts = nameVal.split(/\s+/).filter(Boolean);
+            if (parts.length < 2) {
+                errorMessage.textContent = "Please provide your genuine Full Name (First & Last Name).";
+                errorMessage.style.display = "block";
+                nameInput.focus();
+                return;
+            }
+
+            const emailVal = emailInput.value.trim().toLowerCase();
+            const domain = emailVal.split("@")[1];
+            if (DISPOSABLE_DOMAINS.includes(domain)) {
+                errorMessage.textContent = "Temporary or disposable emails are blocked. Please provide a genuine email.";
+                errorMessage.style.display = "block";
+                emailInput.focus();
+                return;
+            }
+
+            const pwdVal = passwordInput.value;
+            if (pwdVal.length < 8 || !(/[0-9]/.test(pwdVal) && /[a-zA-Z]/.test(pwdVal))) {
+                errorMessage.textContent = "Password must be at least 8 characters and contain both letters and numbers.";
+                errorMessage.style.display = "block";
+                passwordInput.focus();
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Verifying & Creating Account...";
+
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch("/signup", {
+                    method: "POST",
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    successMessage.textContent = "Genuine candidate verified. Redirecting to sign in...";
+                    successMessage.style.display = "block";
+                    form.reset();
+                    setTimeout(() => {
+                        window.location.href = "/login";
+                    }, 900);
+                    return;
+                }
+
+                errorMessage.textContent = data.message || "Unable to register candidate account.";
+                errorMessage.style.display = "block";
+
+            } catch (error) {
+                errorMessage.textContent = "Network error. Please try again.";
+                errorMessage.style.display = "block";
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Create Verified Account";
+            }
+        });
+</script>
+
+</body>
+</html>

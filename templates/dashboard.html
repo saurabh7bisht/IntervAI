@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | IntervAI</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .dashboard-main { padding-top: 38px; padding-bottom: 70px; }
+        .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin: 12px 0 28px; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin: 24px 0; }
+        .stat-card { padding: 24px; }
+        .stat-label { color: #a5b4fc; font-size: 13px; letter-spacing: .04em; }
+        .stat-value { font-size: 36px; font-weight: 750; margin: 10px 0 4px; }
+        .stat-card p, .quick-card p { color: #94a3b8; }
+        .quick-card { padding: 30px; margin: 20px 0; }
+        .dashboard-start { display: flex; justify-content: center; margin-top: 22px; }
+        .history-list { margin-top: 20px; }
+        .history-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px 0; border-top: 1px solid rgba(148, 163, 184, .14); }
+        .history-main { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+        .history-main strong { font-size: 15px; }
+        .history-main span { font-size: 12px; color: #94a3b8; }
+        .history-meta { display: flex; align-items: center; justify-content: flex-end; gap: 15px; flex-wrap: wrap; }
+        .history-status { font-size: 11px; border-radius: 999px; padding: 5px 9px; background: rgba(148, 163, 184, .12); color: #cbd5e1; }
+        .status-completed { background: rgba(34, 197, 94, .12); color: #86efac; }
+        .status-in_progress { background: rgba(56, 189, 248, .12); color: #7dd3fc; }
+        .history-score { white-space: nowrap; }
+        .history-link { color: #a5b4fc; text-decoration: none; font-size: 13px; font-weight: 650; white-space: nowrap; }
+        .history-link:hover { color: #c4b5fd; }
+        .empty-history { padding: 30px 15px; text-align: center; border: 1px dashed rgba(148, 163, 184, .18); border-radius: 14px; color: #94a3b8; line-height: 1.8; }
+        .profile-menu { display: flex; align-items: center; gap: 12px; }
+        .profile-info { display: flex; flex-direction: column; gap: 2px; text-align: right; }
+        .profile-info strong { font-size: 13px; color: #f8fafc; }
+        .profile-info span { font-size: 11px; color: #94a3b8; }
+
+        @media(max-width:700px){
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .history-row { align-items: flex-start; flex-direction: column; }
+            .history-meta { justify-content: flex-start; }
+            .profile-info { display: none; }
+            .navbar { gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="navbar">
+    <a href="/" class="brand">
+        <img src="/static/logo.svg" class="brand-logo" alt="IntervAI">
+        <span class="brand-name">IntervAI</span>
+    </a>
+
+    <nav class="nav-links">
+        <a href="/dashboard">Dashboard</a>
+        <a href="/interview-setup">+ New Interview</a>
+    </nav>
+
+    <div class="profile-menu">
+        <div class="user-avatar-badge">{{USER_INITIAL}}</div>
+        <div class="profile-info">
+            <strong>{{USER_NAME}}</strong>
+            <span>{{USER_EMAIL}}</span>
+        </div>
+
+        <div class="settings-wrap">
+            <button type="button" id="settingsToggleBtn" class="settings-icon-btn" title="Settings" aria-label="Settings">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+            </button>
+            <div id="settingsDropdown" class="settings-dropdown">
+                <div class="dropdown-header">
+                    <div class="dropdown-avatar">{{USER_INITIAL}}</div>
+                    <div class="dropdown-user">
+                        <strong>{{USER_NAME}}</strong>
+                        <span>{{USER_EMAIL}}</span>
+                    </div>
+                </div>
+                <div class="dropdown-divider"></div>
+                <button type="button" id="openPasswordModalBtn" class="dropdown-action">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                    Change Password
+                </button>
+                <div class="dropdown-divider"></div>
+                <a href="/logout" class="dropdown-action logout-action">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    Log Out
+                </a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="container dashboard-main">
+    <section class="dashboard-header animate-fade-up">
+        <div>
+            <div class="auth-badge"><span>✦</span>Candidate Workspace</div>
+            <h1>Welcome back, <span class="gradient-text">{{USER_NAME}}</span></h1>
+            <p>Track your evaluation history and launch new AI-tailored interviews.</p>
+        </div>
+    </section>
+
+    <section class="dashboard-grid">
+        <div class="glass-card stat-card animate-fade-up delay-1">
+            <div class="stat-label">Completed Interviews</div>
+            <div class="stat-value">{{COMPLETED_INTERVIEWS}}</div>
+            <p>Interviews completed</p>
+        </div>
+        <div class="glass-card stat-card animate-fade-up delay-2">
+            <div class="stat-label">Questions Answered</div>
+            <div class="stat-value">{{ANSWERED_QUESTIONS}}</div>
+            <p>Evaluated responses saved</p>
+        </div>
+        <div class="glass-card stat-card animate-fade-up delay-3">
+            <div class="stat-label">Average Score</div>
+            <div class="stat-value">{{AVERAGE_SCORE}}</div>
+            <p>Across completed interviews</p>
+        </div>
+    </section>
+
+    <section class="glass-card quick-card animate-fade-up delay-2">
+        <div style="text-align:center">
+            <div class="auth-badge">AI Interview Engine</div>
+            <h2>Start a new interview</h2>
+            <p>Upload your resume, add the job description, and let IntervAI formulate targeted gap-probing questions.</p>
+            <div class="dashboard-start">
+                <a href="/interview-setup" class="btn btn-primary">Start New Interview →</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="glass-card quick-card animate-fade-up delay-3">
+        <h2>Recent Interviews &amp; Reports</h2>
+        <p>Your latest interview sessions, radar evaluations, and performance records.</p>
+        <div class="history-list">{{RECENT_INTERVIEWS}}</div>
+    </section>
+</main>
+
+<div id="passwordModal" class="modal-backdrop">
+    <div class="modal-card glass-card">
+        <div class="modal-header">
+            <h3>Change Password</h3>
+            <button type="button" id="closePasswordModalBtn" class="modal-close">&times;</button>
+        </div>
+        <form id="changePasswordForm">
+            <div id="passwordModalError" class="modal-msg error-msg"></div>
+            <div id="passwordModalSuccess" class="modal-msg success-msg"></div>
+
+            <div class="form-group">
+                <label for="currentPassword">Current Password</label>
+                <input type="password" id="currentPassword" name="currentPassword" class="auth-input" placeholder="Enter current password" autocomplete="current-password" required>
+            </div>
+            <div class="form-group">
+                <label for="newPassword">New Password</label>
+                <input type="password" id="newPassword" name="newPassword" class="auth-input" placeholder="Min. 8 characters (letters &amp; numbers)" minlength="8" autocomplete="new-password" required>
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword">Confirm New Password</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" class="auth-input" placeholder="Re-enter new password" minlength="8" autocomplete="new-password" required>
+            </div>
+            <div class="modal-actions">
+                <button type="button" id="cancelPasswordModalBtn" class="btn btn-secondary">Cancel</button>
+                <button type="submit" id="savePasswordBtn" class="btn btn-primary">Update Password</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+const settingsToggleBtn = document.getElementById("settingsToggleBtn");
+    const settingsDropdown = document.getElementById("settingsDropdown");
+
+    settingsToggleBtn.addEventListener("click", function(e) {
+        e.stopPropagation();
+        settingsDropdown.classList.toggle("show");
+        settingsToggleBtn.classList.toggle("active");
+    });
+
+    document.addEventListener("click", function(e) {
+        if (!settingsDropdown.contains(e.target) && e.target !== settingsToggleBtn) {
+            settingsDropdown.classList.remove("show");
+            settingsToggleBtn.classList.remove("active");
+        }
+    });
+
+    const openPasswordModalBtn = document.getElementById("openPasswordModalBtn");
+    const passwordModal = document.getElementById("passwordModal");
+    const closePasswordModalBtn = document.getElementById("closePasswordModalBtn");
+    const cancelPasswordModalBtn = document.getElementById("cancelPasswordModalBtn");
+    const changePasswordForm = document.getElementById("changePasswordForm");
+    const passwordModalError = document.getElementById("passwordModalError");
+    const passwordModalSuccess = document.getElementById("passwordModalSuccess");
+    const savePasswordBtn = document.getElementById("savePasswordBtn");
+
+    function openModal() {
+        settingsDropdown.classList.remove("show");
+        settingsToggleBtn.classList.remove("active");
+        passwordModalError.style.display = "none";
+        passwordModalSuccess.style.display = "none";
+        changePasswordForm.reset();
+        passwordModal.classList.add("show");
+    }
+
+    function closeModal() {
+        passwordModal.classList.remove("show");
+    }
+
+    openPasswordModalBtn.addEventListener("click", openModal);
+    closePasswordModalBtn.addEventListener("click", closeModal);
+    cancelPasswordModalBtn.addEventListener("click", closeModal);
+
+    passwordModal.addEventListener("click", function(e) {
+        if (e.target === passwordModal) closeModal();
+    });
+
+    changePasswordForm.addEventListener("submit", async function(e) {
+        e.preventDefault();
+        passwordModalError.style.display = "none";
+        passwordModalSuccess.style.display = "none";
+
+        const currentPassword = document.getElementById("currentPassword").value;
+        const newPassword = document.getElementById("newPassword").value;
+        const confirmPassword = document.getElementById("confirmPassword").value;
+
+        if (newPassword !== confirmPassword) {
+            passwordModalError.textContent = "New password and confirmation do not match.";
+            passwordModalError.style.display = "block";
+            return;
+        }
+
+        savePasswordBtn.disabled = true;
+        savePasswordBtn.textContent = "Updating...";
+
+        try {
+            const res = await fetch("/api/change-password", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    current_password: currentPassword,
+                    new_password: newPassword,
+                    confirm_password: confirmPassword
+                })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok || !data.success) {
+                passwordModalError.textContent = data.message || "Failed to update password.";
+                passwordModalError.style.display = "block";
+            } else {
+                passwordModalSuccess.textContent = data.message || "Password updated successfully!";
+                passwordModalSuccess.style.display = "block";
+                setTimeout(closeModal, 1500);
+            }
+        } catch (err) {
+            passwordModalError.textContent = err.message || "Connection error. Please try again.";
+            passwordModalError.style.display = "block";
+        } finally {
+            savePasswordBtn.disabled = false;
+            savePasswordBtn.textContent = "Update Password";
+        }
+    });
+</script>
+
+</body>
+</html>

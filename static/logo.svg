@@ -1,0 +1,57 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Primary corporate gradient -->
+    <linearGradient id="intervaiPrimary" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="50%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+
+    <!-- Cyan/Sky accent gradient for intelligence spark -->
+    <linearGradient id="intervaiCyan" x1="16" y1="16" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#60a5fa"/>
+      <stop offset="100%" stop-color="#38bdf8"/>
+    </linearGradient>
+
+    <!-- Subtle container glow -->
+    <radialGradient id="intervaiGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Drop shadow -->
+    <filter id="logoShadow" x="-10%" y="-10%" width="120%" height="125%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#020617" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+
+  <!-- Ambient Glow Behind Icon -->
+  <circle cx="32" cy="32" r="28" fill="url(#intervaiGlow)"/>
+
+  <!-- Outer Rounded Polygon Shield / Emblem -->
+  <rect x="7" y="7" width="50" height="50" rx="14" fill="#0b172a" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" filter="url(#logoShadow)"/>
+  
+  <!-- Subtle inner border for depth -->
+  <rect x="8.5" y="8.5" width="47" height="47" rx="12.5" fill="none" stroke="rgba(79, 126, 248, 0.25)" stroke-width="1"/>
+
+  <!-- Geometric Abstract 'I' / AI Voice Aperture -->
+  <!-- Left soundwave / bracket -->
+  <path d="M19 24C19 22.8954 19.8954 22 21 22C22.1046 22 23 22.8954 23 24V40C23 41.1046 22.1046 42 21 42C19.8954 42 19 41.1046 19 40V24Z" fill="url(#intervaiCyan)" fill-opacity="0.6"/>
+  
+  <!-- Center Core Pillar (The 'I') -->
+  <rect x="28.5" y="18" width="7" height="28" rx="3.5" fill="url(#intervaiPrimary)"/>
+  
+  <!-- Intelligent Neural Core Pulse (Center node dot) -->
+  <circle cx="32" cy="18" r="3.5" fill="#93c5fd"/>
+  <circle cx="32" cy="46" r="3.5" fill="#3b82f6"/>
+
+  <!-- Right soundwave / bracket -->
+  <path d="M41 24C41 22.8954 41.8954 22 43 22C44.1046 22 45 22.8954 45 24V40C45 41.1046 44.1046 42 43 42C41.8954 42 41 41.1046 41 40V24Z" fill="url(#intervaiCyan)" fill-opacity="0.6"/>
+
+  <!-- Dialogue Intersecting Beam (Dynamic Soundwave arc) -->
+  <path d="M23 32H28.5" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M35.5 32H41" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Top Intelligence Beacon -->
+  <circle cx="45" cy="17" r="2" fill="#38bdf8"/>
+</svg>

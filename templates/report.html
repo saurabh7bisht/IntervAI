@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interview Report — IntervAI</title>
+<link rel="stylesheet" href="/static/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
+
+</script>
+<style>
+.report-page { padding: 0 0 80px; }
+
+.report-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; padding: 14px 24px;
+    background: rgba(2,6,23,0.85); border-bottom: 1px solid rgba(148,163,184,0.1);
+    backdrop-filter: blur(20px); position: sticky; top: 0; z-index: 100;
+}
+.topbar-brand { display:flex; align-items:center; gap:10px; font-weight:800; font-size:17px; }
+.topbar-brand img { width:32px; height:32px; }
+.topbar-nav { display:flex; gap:8px; }
+.topbar-nav a { padding:8px 14px; border-radius:10px; border:1px solid rgba(148,163,184,0.15); background:rgba(15,23,42,0.6); color:#cbd5e1; font-size:13px; font-weight:700; text-decoration:none; transition:all 0.2s; }
+.topbar-nav a:hover { border-color:rgba(79,126,248,0.4); color:white; }
+.topbar-nav a.primary { background:#4f7ef8; border:none; color:white; }
+
+.report-hero {
+    width:min(1200px,calc(100% - 48px)); margin: 32px auto 0;
+    display:grid; grid-template-columns:1fr auto; gap:24px; align-items:start;
+}
+.report-hero-left {}
+.report-badge { display:inline-flex; align-items:center; gap:8px; padding:6px 12px; border-radius:999px; border:1px solid rgba(79,126,248,0.25); background:rgba(79,126,248,0.08); color:#93c5fd; font-size:12px; font-weight:700; margin-bottom:14px; }
+.report-title { font-size:clamp(28px,4vw,42px); font-weight:900; letter-spacing:-1.5px; margin-bottom:10px; }
+.report-meta-row { display:flex; flex-wrap:wrap; gap:8px; }
+.report-meta-pill { padding:5px 10px; border-radius:8px; background:rgba(148,163,184,0.07); color:#94a3b8; font-size:12px; }
+
+.score-hero-card {
+    padding:24px 28px; border-radius:20px; text-align:center; min-width:160px;
+    background:rgba(15,23,42,0.85);
+    border:1px solid rgba(79,126,248,0.25);
+}
+.score-hero-num {
+    font-size:58px; font-weight:900;
+    color:#60a5fa;
+    line-height:1;
+}
+.score-hero-label { color:#94a3b8; font-size:13px; margin-top:6px; }
+.score-grade { display:inline-block; margin-top:8px; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:800; }
+.grade-A { background:rgba(52,211,153,0.15); color:#34d399; }
+.grade-B { background:rgba(96,165,250,0.15); color:#60a5fa; }
+.grade-C { background:rgba(251,191,36,0.15); color:#fbbf24; }
+.grade-D { background:rgba(239,68,68,0.15); color:#f87171; }
+
+.report-body { width:min(1200px,calc(100% - 48px)); margin: 28px auto 0; }
+
+.metrics-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:28px; }
+.metric-card {
+    padding:18px 16px; border-radius:16px; text-align:center;
+    background:rgba(15,23,42,0.78); border:1px solid rgba(148,163,184,0.12);
+    backdrop-filter:blur(18px);
+}
+.metric-label { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.07em; color:#64748b; margin-bottom:10px; }
+.metric-num { font-size:28px; font-weight:900; color:#f8fafc; }
+.metric-num small { font-size:14px; color:#64748b; font-weight:600; }
+.metric-bar { width:100%; height:4px; border-radius:999px; background:rgba(148,163,184,0.1); margin-top:10px; overflow:hidden; }
+.metric-bar-fill { height:100%; border-radius:inherit; background:linear-gradient(90deg,#2563eb,#4f7ef8); transition:width 1s ease; }
+
+.analysis-grid { display:grid; grid-template-columns:320px 1fr; gap:20px; margin-bottom:28px; }
+.chart-card {
+    padding:24px; border-radius:20px;
+    background:rgba(15,23,42,0.78); border:1px solid rgba(148,163,184,0.12);
+    backdrop-filter:blur(18px);
+}
+.chart-card h3 { font-size:15px; font-weight:800; margin-bottom:20px; color:#f8fafc; }
+.chart-wrapper { position:relative; height:260px; }
+
+.insights-col { display:flex; flex-direction:column; gap:16px; }
+.insight-card {
+    flex:1; padding:20px; border-radius:20px;
+    background:rgba(15,23,42,0.78); border:1px solid rgba(148,163,184,0.12);
+    backdrop-filter:blur(18px);
+}
+.insight-card h3 { font-size:15px; font-weight:800; margin-bottom:12px; }
+.insight-card.strengths-card h3 { color:#34d399; }
+.insight-card.gaps-card h3      { color:#fb923c; }
+.insight-card.study-card h3     { color:#60a5fa; }
+.insight-card p { color:#94a3b8; font-size:14px; line-height:1.7; white-space:pre-wrap; }
+
+.suggestions-card {
+    padding:24px; border-radius:20px; margin-bottom:28px;
+    background:rgba(15,23,42,0.78);
+    border:1px solid rgba(79,126,248,0.2);
+}
+.suggestions-card h3 { color:#93c5fd; font-size:15px; font-weight:800; margin-bottom:10px; }
+.suggestions-card p  { color:#cbd5e1; font-size:14px; line-height:1.75; white-space:pre-wrap; }
+
+.gap-section { margin-bottom:28px; }
+.gap-section h2 { font-size:22px; font-weight:800; margin-bottom:14px; }
+.gap-card {
+    padding:16px 20px; border-radius:14px; margin-bottom:10px;
+    background:rgba(15,23,42,0.7); border:1px solid rgba(148,163,184,0.1);
+    display:flex; align-items:center; gap:14px;
+}
+.gap-icon { font-size:20px; flex-shrink:0; }
+.gap-content strong { display:block; font-size:14px; color:#f8fafc; margin-bottom:2px; }
+.gap-content span { font-size:13px; color:#94a3b8; }
+
+.qa-section h2 { font-size:22px; font-weight:800; margin-bottom:6px; }
+.qa-section p  { color:#94a3b8; font-size:14px; margin-bottom:18px; }
+
+.answer-card {
+    border-radius:20px; margin-bottom:16px; overflow:hidden;
+    background:rgba(15,23,42,0.78); border:1px solid rgba(148,163,184,0.12);
+    backdrop-filter:blur(18px);
+}
+.answer-card-header {
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:16px 22px; background:rgba(2,6,23,0.4); border-bottom:1px solid rgba(148,163,184,0.08);
+    flex-wrap:wrap;
+}
+.q-label { font-size:11px; font-weight:800; letter-spacing:0.07em; color:#60a5fa; }
+.q-badges { display:flex; gap:6px; flex-wrap:wrap; }
+.badge { padding:3px 8px; border-radius:6px; font-size:11px; font-weight:700; }
+.badge-score   { background:rgba(79,126,248,0.15); color:#93c5fd; }
+.badge-voice   { background:rgba(56,189,248,0.12); color:#38bdf8; }
+.badge-ai      { background:rgba(16,185,129,0.12); color:#34d399; }
+.badge-fallback{ background:rgba(148,163,184,0.1); color:#94a3b8; }
+
+.answer-card-body { padding:22px; }
+.answer-card-body h3 { font-size:17px; line-height:1.45; margin-bottom:16px; color:#f8fafc; }
+.answer-section-label { font-size:11px; text-transform:uppercase; letter-spacing:0.07em; color:#64748b; margin-bottom:6px; font-weight:800; }
+.answer-text { color:#e2e8f0; font-size:14px; line-height:1.75; white-space:pre-wrap; background:rgba(2,6,23,0.4); padding:14px; border-radius:10px; }
+.feedback-block { margin-top:14px; padding:16px; border-radius:12px; background:rgba(79,126,248,0.06); border:1px solid rgba(79,126,248,0.18); }
+.feedback-block p { color:#cbd5e1; font-size:14px; line-height:1.7; }
+.feedback-block .advice { color:#93c5fd; font-size:13px; margin-top:8px; font-style:italic; }
+.detail-cols { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px; }
+.detail-col h4 { font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:8px; }
+.detail-col.str h4  { color:#34d399; }
+.detail-col.imp h4  { color:#fb923c; }
+.detail-col ul { list-style:none; padding:0; }
+.detail-col ul li { font-size:13px; color:#94a3b8; padding:3px 0; line-height:1.5; }
+.detail-col.str ul li::before { content:"✓ "; color:#34d399; }
+.detail-col.imp ul li::before { content:"→ "; color:#fb923c; }
+.score-mini-bar { display:flex; align-items:center; gap:8px; margin-top:14px; flex-wrap:wrap; }
+.score-mini-item { display:flex; align-items:center; gap:5px; font-size:12px; color:#94a3b8; }
+.score-dot { width:8px; height:8px; border-radius:50%; }
+
+.retry-banner {
+    text-align:center; padding:36px; border-radius:20px; margin-bottom:28px;
+    background:rgba(15,23,42,0.78);
+    border:1px solid rgba(79,126,248,0.2);
+}
+.retry-banner h3 { font-size:20px; margin-bottom:8px; }
+.retry-banner p  { color:#94a3b8; margin-bottom:18px; }
+.retry-actions   { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+.retry-actions a { padding:12px 24px; border-radius:12px; font-weight:800; font-size:14px; text-decoration:none; transition:all 0.2s; }
+.retry-actions a:hover { transform:translateY(-2px); }
+.btn-retry   { background:#4f7ef8; color:white; }
+.btn-dash    { background:rgba(15,23,42,0.7); border:1px solid rgba(148,163,184,0.15); color:#cbd5e1; }
+
+@media (max-width:900px) {
+    .metrics-grid { grid-template-columns:repeat(3,1fr); }
+    .analysis-grid { grid-template-columns:1fr; }
+    .detail-cols { grid-template-columns:1fr; }
+    .report-hero { grid-template-columns:1fr; }
+}
+@media (max-width:600px) {
+    .metrics-grid { grid-template-columns:repeat(2,1fr); }
+}
+
+body.practice-mode .metrics-grid,
+body.practice-mode .analysis-grid,
+body.practice-mode .suggestions-card {
+    display: none !important;
+}
+
+.practice-banner {
+    display: none;
+    margin-bottom: 28px;
+    padding: 24px 28px;
+    border-radius: 20px;
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(52, 211, 153, 0.25);
+}
+
+body.practice-mode .practice-banner {
+    display: block;
+}
+</style>
+</head>
+<body class="{{BODY_CLASS}}">
+
+<header class="report-topbar">
+    <div class="topbar-brand">
+        <img src="/static/logo.svg" alt="IntervAI">
+        <span style="color:#f8fafc;font-weight:800;font-size:18px;letter-spacing:-0.02em;">IntervAI</span>
+    </div>
+    <nav class="topbar-nav">
+        <a href="/dashboard">← Dashboard</a>
+        <a href="/interview-setup" class="primary">New Interview →</a>
+    </nav>
+</header>
+
+<div class="report-page">
+
+    <div class="report-hero">
+        <div class="report-hero-left">
+            <div class="report-badge">{{REPORT_BADGE}}</div>
+            <h1 class="report-title">{{REPORT_TITLE}}</h1>
+            <div class="report-meta-row">
+                <span class="report-meta-pill">{{ROLE}}</span>
+                <span class="report-meta-pill">{{INTERVIEW_TYPE}}</span>
+                <span class="report-meta-pill">{{LEVEL}}</span>
+                <span class="report-meta-pill">{{MODE}} mode</span>
+                <span class="report-meta-pill">{{DATE}}</span>
+                <span class="report-meta-pill" id="statusPill">{{STATUS}}</span>
+            </div>
+        </div>
+        <div class="score-hero-card">
+            <div class="score-hero-num" id="overallScoreNum">{{OVERALL_SCORE}}</div>
+            <div class="score-hero-label" id="overallScoreLabel">Overall Score / 100</div>
+            <div class="score-grade" id="scoreGrade"></div>
+        </div>
+    </div>
+
+    <div class="report-body">
+
+        <div class="practice-banner">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+                <span style="font-size:24px;">🎓</span>
+                <h3 style="color:#34d399;font-size:18px;font-weight:800;margin:0;">Practice Coaching Dossier & Mini-Reports Archive</h3>
+            </div>
+            <p style="color:#cbd5e1;font-size:14px;line-height:1.6;margin:0;">
+                This dossier archives every question mini-report from your practice session, including recommended frameworks, ideal model answers, and question-by-question accuracy. Use this permanent reference to review and elevate your interview performance.
+            </p>
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">Technical</div>
+                <div class="metric-num" id="techNum">{{TECHNICAL_SCORE}}<small>/100</small></div>
+                <div class="metric-bar"><div class="metric-bar-fill" id="techBar"></div></div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Communication</div>
+                <div class="metric-num" id="commNum">{{COMMUNICATION_SCORE}}<small>/100</small></div>
+                <div class="metric-bar"><div class="metric-bar-fill" id="commBar"></div></div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Accuracy</div>
+                <div class="metric-num" id="accNum">{{ACCURACY_SCORE}}<small>/100</small></div>
+                <div class="metric-bar"><div class="metric-bar-fill" id="accBar"></div></div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Approach</div>
+                <div class="metric-num" id="apprNum">{{APPROACH_SCORE}}<small>/100</small></div>
+                <div class="metric-bar"><div class="metric-bar-fill" id="apprBar"></div></div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Pace</div>
+                <div class="metric-num" id="paceNum">{{SPEED_SCORE}}<small>/100</small></div>
+                <div class="metric-bar"><div class="metric-bar-fill" id="paceBar"></div></div>
+            </div>
+        </div>
+
+        <div class="analysis-grid">
+            <div class="chart-card">
+                <h3>📊 Skill Radar</h3>
+                <div class="chart-wrapper">
+                    <canvas id="radarChart"></canvas>
+                </div>
+            </div>
+            <div class="insights-col">
+                <div class="insight-card strengths-card">
+                    <h3>✅ Strengths</h3>
+                    <p>{{STRENGTHS}}</p>
+                </div>
+                <div class="insight-card gaps-card">
+                    <h3>📈 Areas to Improve</h3>
+                    <p>{{WEAKNESSES}}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="suggestions-card">
+            <h3>💡 Personalized Study Plan & Suggestions</h3>
+            <p>{{SUGGESTIONS}}</p>
+        </div>
+
+        <div class="qa-section">
+            <h2 id="qaSectionTitle">Question-by-Question Review</h2>
+            <p id="qaSectionSubtitle">Detailed breakdown of every question, your answer, and AI feedback.</p>
+            {{ANSWER_DETAILS}}
+        </div>
+
+        <div class="retry-banner">
+            <h3>Ready to practice again?</h3>
+            <p>Take another interview to hone your skills and master real-world questions.</p>
+            <div class="retry-actions">
+                <a href="/interview-setup" class="btn-retry">🎯 Practice Again</a>
+                <a href="/dashboard" class="btn-dash">Dashboard</a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+function getGrade(score) {
+    const n = parseFloat(score);
+    if (isNaN(n)) return { label: "—", cls: "grade-B" };
+    if (n >= 85) return { label: "A — Excellent",  cls: "grade-A" };
+    if (n >= 70) return { label: "B — Good",        cls: "grade-B" };
+    if (n >= 55) return { label: "C — Average",     cls: "grade-C" };
+    return             { label: "D — Needs Work",   cls: "grade-D" };
+}
+
+function scoreToNum(el) {
+    if (!el) return 0;
+    return parseFloat(el.textContent) || 0;
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+    const isPractice = document.body.classList.contains("practice-mode");
+    if (isPractice) {
+        const titleEl = document.getElementById("qaSectionTitle");
+        const subEl = document.getElementById("qaSectionSubtitle");
+        const labelEl = document.getElementById("overallScoreLabel");
+        if (titleEl) titleEl.textContent = "Question-by-Question Mini-Reports Dossier";
+        if (subEl) subEl.textContent = "Complete chronological archive of model answers, recommended methods, and question accuracy.";
+        if (labelEl) labelEl.textContent = "Average Accuracy / 100";
+    }
+
+    const overall = scoreToNum(document.getElementById("overallScoreNum"));
+    const grade   = getGrade(overall);
+    const gradePill = document.getElementById("scoreGrade");
+    if (gradePill) {
+        gradePill.textContent = grade.label;
+        gradePill.className   = "score-grade " + grade.cls;
+    }
+
+    if (!isPractice) {
+        const bars = [
+            { bar: "techBar",  num: "techNum"  },
+            { bar: "commBar",  num: "commNum"  },
+            { bar: "accBar",   num: "accNum"   },
+            { bar: "apprBar",  num: "apprNum"  },
+            { bar: "paceBar",  num: "paceNum"  },
+        ];
+
+        bars.forEach(({ bar, num }) => {
+            const numEl  = document.getElementById(num);
+            const barEl  = document.getElementById(bar);
+            const val    = parseFloat(numEl?.textContent) || 0;
+            setTimeout(() => {
+                if (barEl) barEl.style.width = val + "%";
+            }, 200);
+        });
+
+        const techScore = scoreToNum(document.getElementById("techNum"));
+        const commScore = scoreToNum(document.getElementById("commNum"));
+        const accScore  = scoreToNum(document.getElementById("accNum"));
+        const apprScore = scoreToNum(document.getElementById("apprNum"));
+        const paceScore = scoreToNum(document.getElementById("paceNum"));
+
+        const ctx = document.getElementById("radarChart")?.getContext("2d");
+        if (ctx) {
+            new Chart(ctx, {
+                type: "radar",
+                data: {
+                    labels: ["Technical", "Communication", "Accuracy", "Approach", "Pace"],
+                    datasets: [{
+                        label: "Your Score",
+                        data: [techScore, commScore, accScore, apprScore, paceScore],
+                        backgroundColor: "rgba(79, 126, 248, 0.15)",
+                        borderColor: "rgba(79, 126, 248, 0.8)",
+                        pointBackgroundColor: "#4f7ef8",
+                        pointBorderColor: "#fff",
+                        pointRadius: 5,
+                        borderWidth: 2,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        r: {
+                            min: 0, max: 100,
+                            ticks: {
+                                stepSize: 25,
+                                color: "#64748b",
+                                font: { size: 10 },
+                                backdropColor: "transparent",
+                            },
+                            grid:        { color: "rgba(148,163,184,0.1)" },
+                            angleLines:  { color: "rgba(148,163,184,0.1)" },
+                            pointLabels: { color: "#94a3b8", font: { size: 12, weight: "700" } },
+                        }
+                    }
+                }
+            });
+        }
+    }
+});
+</script>
+</body>
+</html>
