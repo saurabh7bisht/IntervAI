@@ -1,4 +1,4 @@
-# IntervAI — Adaptive AI Interview & Career Coaching Platform
+# IntervAI — Adaptive AI Mock Interview Platform
 
 <p align="center">
   <img src="static/logo.svg" alt="IntervAI Logo" width="90" height="90" />
