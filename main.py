@@ -10,7 +10,7 @@ from pathlib import Path
 from docx import Document
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, Request, UploadFile
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from passlib.context import CryptContext
 from pypdf import PdfReader
@@ -39,17 +39,22 @@ DATABASE_URL = os.getenv(
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+engine = create_engine(
+    DATABASE_URL,
+    pool_pre_ping=True,
+    pool_recycle=300,
+    connect_args={"connect_timeout": 5}
+)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    return pwd_context.hash(password[:72])
 
 
 def verify_password(password: str, password_hash: str) -> bool:
-    return pwd_context.verify(password, password_hash)
+    return pwd_context.verify(password[:72], password_hash)
 
 
 app = FastAPI(title="IntervAI Enterprise", version="2.0.0")
@@ -504,6 +509,14 @@ async def change_password(request: Request):
         return {"success": True, "message": "Password updated successfully!"}
     except Exception as error:
         return {"success": False, "message": f"Unable to update password: {str(error)}"}
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    icon_path = STATIC_DIR / "logo.svg"
+    if icon_path.exists():
+        return FileResponse(icon_path, media_type="image/svg+xml")
+    return HTMLResponse("", status_code=204)
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -1412,7 +1425,7 @@ async def submit_interview_answer(request: Request, interview_id: int):
         if not answer_text:
             return {"success": False, "message": "Please provide an answer."}
 
-        with engine.begin() as connection:
+        with engine.connect() as connection:
             valid_question = connection.execute(
                 text("""
                     SELECT q.id, q.question_number, q.question_text,
@@ -1463,23 +1476,77 @@ async def submit_interview_answer(request: Request, interview_id: int):
                 for row in past_qa_rows
             ]
 
-            input_mode = str(data.get("input_mode", "typed")).strip().lower()
-            if input_mode not in ("voice", "typed"):
-                input_mode = "typed"
+            answered_count = connection.execute(
+                text("""
+                    SELECT COUNT(*)
+                    FROM interview_answers a
+                    JOIN interview_questions q ON q.id = a.question_id
+                    WHERE q.interview_id = :interview_id
+                """),
+                {"interview_id": interview_id}
+            ).scalar() or 0
 
-            wpm = calculate_wpm(answer_text, duration_seconds)
-            evaluation = evaluate_interview_answer(
-                valid_question.question_text,
-                answer_text,
+        input_mode = str(data.get("input_mode", "typed")).strip().lower()
+        if input_mode not in ("voice", "typed"):
+            input_mode = "typed"
+
+        wpm = calculate_wpm(answer_text, duration_seconds)
+        evaluation = evaluate_interview_answer(
+            valid_question.question_text,
+            answer_text,
+            valid_question.role,
+            valid_question.experience_level or "Unspecified",
+            valid_question.interview_type or "Mixed",
+            valid_question.mode or "Practice",
+            resume_text=resume_text,
+            jd_text=jd_text,
+            previous_qa=previous_qa
+        )
+        evaluation["input_mode"] = input_mode
+
+        interviewer_interest = evaluation.get("interviewer_interest", "moderate")
+        recommend_follow_up = evaluation.get("recommend_follow_up", False)
+        next_action = evaluation.get("next_action", "new_core_topic")
+
+        adaptive_added = False
+        interview_finished = False
+        adaptive_question = None
+
+        if int(answered_count) >= 8 or (
+            int(answered_count) >= 5
+            and next_action == "conclude"
+            and not recommend_follow_up
+            and interviewer_interest != "high"
+        ):
+            interview_finished = True
+        else:
+            next_q_num = int(answered_count) + 1
+            current_qa_list = previous_qa + [{
+                "num": valid_question.question_number,
+                "q": valid_question.question_text,
+                "a": answer_text
+            }]
+            adaptive_question = generate_adaptive_question(
                 valid_question.role,
                 valid_question.experience_level or "Unspecified",
                 valid_question.interview_type or "Mixed",
                 valid_question.mode or "Practice",
+                valid_question.question_text,
+                answer_text,
+                evaluation,
+                next_q_num,
                 resume_text=resume_text,
                 jd_text=jd_text,
-                previous_qa=previous_qa
+                previous_qa=current_qa_list
             )
-            evaluation["input_mode"] = input_mode
+
+        with engine.begin() as connection:
+            already_answered_check = connection.execute(
+                text("SELECT id FROM interview_answers WHERE question_id = :question_id"),
+                {"question_id": question_id}
+            ).fetchone()
+            if already_answered_check:
+                return {"success": False, "message": "This question has already been answered."}
 
             answer_result = connection.execute(
                 text("""
@@ -1505,29 +1572,7 @@ async def submit_interview_answer(request: Request, interview_id: int):
             )
             answer_row = answer_result.fetchone()
 
-            answered_count = connection.execute(
-                text("""
-                    SELECT COUNT(*)
-                    FROM interview_answers a
-                    JOIN interview_questions q ON q.id = a.question_id
-                    WHERE q.interview_id = :interview_id
-                """),
-                {"interview_id": interview_id}
-            ).scalar() or 0
-
-            interviewer_interest = evaluation.get("interviewer_interest", "moderate")
-            recommend_follow_up = evaluation.get("recommend_follow_up", False)
-            next_action = evaluation.get("next_action", "new_core_topic")
-
-            adaptive_added = False
-            interview_finished = False
-
-            if int(answered_count) >= 8 or (
-                int(answered_count) >= 5
-                and next_action == "conclude"
-                and not recommend_follow_up
-                and interviewer_interest != "high"
-            ):
+            if interview_finished:
                 connection.execute(
                     text("""
                         DELETE FROM interview_questions
@@ -1538,77 +1583,56 @@ async def submit_interview_answer(request: Request, interview_id: int):
                     """),
                     {"interview_id": interview_id}
                 )
-                interview_finished = True
-            else:
-                next_q_num = int(answered_count) + 1
-                current_qa_list = previous_qa + [{
-                    "num": valid_question.question_number,
-                    "q": valid_question.question_text,
-                    "a": answer_text
-                }]
-                adaptive_question = generate_adaptive_question(
-                    valid_question.role,
-                    valid_question.experience_level or "Unspecified",
-                    valid_question.interview_type or "Mixed",
-                    valid_question.mode or "Practice",
-                    valid_question.question_text,
-                    answer_text,
-                    evaluation,
-                    next_q_num,
-                    resume_text=resume_text,
-                    jd_text=jd_text,
-                    previous_qa=current_qa_list
-                )
-                if adaptive_question:
-                    next_unanswered = connection.execute(
-                        text("""
-                            SELECT id FROM interview_questions
-                            WHERE interview_id = :interview_id
-                              AND NOT EXISTS (
-                                  SELECT 1 FROM interview_answers a WHERE a.question_id = interview_questions.id
-                              )
-                            ORDER BY question_number
-                            LIMIT 1
-                        """),
-                        {"interview_id": interview_id}
-                    ).fetchone()
+            elif adaptive_question:
+                next_unanswered = connection.execute(
+                    text("""
+                        SELECT id FROM interview_questions
+                        WHERE interview_id = :interview_id
+                          AND NOT EXISTS (
+                              SELECT 1 FROM interview_answers a WHERE a.question_id = interview_questions.id
+                          )
+                        ORDER BY question_number
+                        LIMIT 1
+                    """),
+                    {"interview_id": interview_id}
+                ).fetchone()
 
-                    if next_unanswered:
-                        connection.execute(
-                            text("""
-                                UPDATE interview_questions
-                                SET question_text = :question_text,
-                                    question_type = :question_type,
-                                    difficulty = :difficulty,
-                                    question_number = :question_number
-                                WHERE id = :qid
-                            """),
-                            {
-                                "qid": next_unanswered.id,
-                                "question_text": adaptive_question["question_text"],
-                                "question_type": adaptive_question["question_type"],
-                                "difficulty": adaptive_question["difficulty"],
-                                "question_number": next_q_num
-                            }
-                        )
-                    else:
-                        connection.execute(
-                            text("""
-                                INSERT INTO interview_questions (
-                                    interview_id, question_number, question_text,
-                                    question_type, difficulty
-                                )
-                                VALUES (
-                                    :interview_id, :question_number, :question_text,
-                                    :question_type, :difficulty
-                                )
-                            """),
-                            {
-                                "interview_id": interview_id,
-                                **adaptive_question
-                            }
-                        )
-                    adaptive_added = True
+                if next_unanswered:
+                    connection.execute(
+                        text("""
+                            UPDATE interview_questions
+                            SET question_text = :question_text,
+                                question_type = :question_type,
+                                difficulty = :difficulty,
+                                question_number = :question_number
+                            WHERE id = :qid
+                        """),
+                        {
+                            "qid": next_unanswered.id,
+                            "question_text": adaptive_question["question_text"],
+                            "question_type": adaptive_question["question_type"],
+                            "difficulty": adaptive_question["difficulty"],
+                            "question_number": next_q_num
+                        }
+                    )
+                else:
+                    connection.execute(
+                        text("""
+                            INSERT INTO interview_questions (
+                                interview_id, question_number, question_text,
+                                question_type, difficulty
+                            )
+                            VALUES (
+                                :interview_id, :question_number, :question_text,
+                                :question_type, :difficulty
+                            )
+                        """),
+                        {
+                            "interview_id": interview_id,
+                            **adaptive_question
+                        }
+                    )
+                adaptive_added = True
 
             total_questions = connection.execute(
                 text("SELECT COUNT(*) FROM interview_questions WHERE interview_id = :interview_id"),
