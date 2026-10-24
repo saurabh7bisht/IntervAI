@@ -2,6 +2,8 @@
 .env
 .env.local
 *.env
+init_neon.py
+test_*.py
 
 # Virtual Environments
 .venv/
