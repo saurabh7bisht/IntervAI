@@ -25,13 +25,20 @@ except ImportError:
     genai = None
     genai_types = None
 
-load_dotenv(Path(__file__).resolve().parent / ".env", override=False)
+BASE_DIR = Path(__file__).resolve().parent
+TEMPLATES_DIR = BASE_DIR / "templates"
+STATIC_DIR = BASE_DIR / "static"
+
+load_dotenv(BASE_DIR / ".env", override=False)
 
 logger = logging.getLogger("intervai.ai")
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL", "postgresql://postgres:postgresql@localhost:5432/intervai"
 ).strip()
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -210,7 +217,10 @@ async def gemini_test(request: Request):
         return {"success": False, "message": "Gemini request failed. Check the API key, model name, quota, and server terminal."}
 
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+
+_tables_initialized = False
 
 
 def create_database_tables():
@@ -301,22 +311,40 @@ def create_database_tables():
         connection.execute(text("ALTER TABLE interviews ADD COLUMN IF NOT EXISTS question_count INTEGER DEFAULT 8"))
 
 
+def ensure_database_ready():
+    global _tables_initialized
+    if not _tables_initialized:
+        try:
+            create_database_tables()
+            _tables_initialized = True
+        except Exception as error:
+            logger.warning("Database table initialization: %s", error)
+
+
 @app.on_event("startup")
 def startup_event():
-    try:
-        create_database_tables()
-    except Exception as error:
-        logger.error("Database table creation failed: %s", error)
+    ensure_database_ready()
 
 
 @app.get("/database-test")
 def database_test():
     try:
+        ensure_database_ready()
         with engine.connect() as connection:
             value = connection.execute(text("SELECT 1")).scalar()
-        return {"success": True, "message": "PostgreSQL connected successfully!", "database_test": value}
+            user_count = connection.execute(text("SELECT count(*) FROM users")).scalar()
+        return {
+            "success": True,
+            "message": "PostgreSQL connected and all 7 tables verified successfully!",
+            "database_test": value,
+            "total_users_in_db": user_count,
+        }
     except Exception as error:
-        return {"success": False, "message": "PostgreSQL connection failed.", "error": str(error)}
+        return {
+            "success": False,
+            "message": "PostgreSQL connection failed. Ensure DATABASE_URL is set correctly in Vercel Project Settings > Environment Variables.",
+            "error": str(error),
+        }
 
 
 @app.get("/tables-test")
@@ -337,6 +365,7 @@ def tables_test():
 
 @app.post("/signup")
 def signup(name: str = Form(...), email: str = Form(...), password: str = Form(...)):
+    ensure_database_ready()
     name = name.strip()
     email = email.strip().lower()
 
@@ -391,6 +420,7 @@ def signup(name: str = Form(...), email: str = Form(...), password: str = Form(.
 
 @app.post("/login")
 def login(request: Request, email: str = Form(...), password: str = Form(...)):
+    ensure_database_ready()
     email = email.strip().lower()
     client_ip = request.client.host if request.client else "unknown"
     rate_key = f"{client_ip}:{email}"
@@ -478,7 +508,7 @@ async def change_password(request: Request):
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
-    with open("templates/index.html", "r", encoding="utf-8") as file:
+    with open(TEMPLATES_DIR / "index.html", "r", encoding="utf-8") as file:
         content = file.read()
 
     user_id = request.session.get("user_id")
@@ -527,7 +557,7 @@ def interview_setup(request: Request):
     if not user_id:
         return RedirectResponse(url="/login", status_code=303)
 
-    with open("templates/interview-setup.html", "r", encoding="utf-8") as file:
+    with open(TEMPLATES_DIR / "interview-setup.html", "r", encoding="utf-8") as file:
         return file.read()
 
 
@@ -536,7 +566,7 @@ def signup_page(request: Request):
     if request.session.get("user_id"):
         return RedirectResponse(url="/dashboard", status_code=303)
 
-    with open("templates/signup.html", "r", encoding="utf-8") as file:
+    with open(TEMPLATES_DIR / "signup.html", "r", encoding="utf-8") as file:
         return HTMLResponse(
             content=file.read(),
             headers={"Cache-Control": "no-cache, no-store, must-revalidate"}
@@ -548,7 +578,7 @@ def login_page(request: Request):
     if request.session.get("user_id"):
         return RedirectResponse(url="/dashboard", status_code=303)
 
-    with open("templates/login.html", "r", encoding="utf-8") as file:
+    with open(TEMPLATES_DIR / "login.html", "r", encoding="utf-8") as file:
         return HTMLResponse(
             content=file.read(),
             headers={"Cache-Control": "no-cache, no-store, must-revalidate"}
@@ -561,7 +591,7 @@ def dashboard(request: Request):
     if not user_id:
         return RedirectResponse(url="/login", status_code=303)
 
-    with open("templates/dashboard.html", "r", encoding="utf-8") as file:
+    with open(TEMPLATES_DIR / "dashboard.html", "r", encoding="utf-8") as file:
         page = file.read()
 
     completed_interviews = 0
@@ -672,7 +702,7 @@ def interview_report_page(request: Request, interview_id: int):
                 ORDER BY q.question_number
             """), {"interview_id": interview_id}).fetchall()
 
-        with open("templates/report.html", "r", encoding="utf-8") as file:
+        with open(TEMPLATES_DIR / "report.html", "r", encoding="utf-8") as file:
             page = file.read()
 
         def esc(value, default="Not available"):
@@ -1272,7 +1302,7 @@ def live_interview_page(request: Request, interview_id: int):
                 {"interview_id": interview_id, "user_id": user_id}
             )
 
-        with open("templates/interview.html", "r", encoding="utf-8") as file:
+        with open(TEMPLATES_DIR / "interview.html", "r", encoding="utf-8") as file:
             html = file.read()
 
         return (
