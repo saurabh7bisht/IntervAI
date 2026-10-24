@@ -33,17 +33,26 @@ load_dotenv(BASE_DIR / ".env", override=False)
 
 logger = logging.getLogger("intervai.ai")
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL", "postgresql://postgres:postgresql@localhost:5432/intervai"
-).strip()
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+IS_ON_VERCEL = bool(os.getenv("VERCEL"))
+RAW_DB_URL = os.getenv("DATABASE_URL", "").strip()
+HAS_CUSTOM_DB = bool(RAW_DB_URL)
+
+if RAW_DB_URL:
+    DATABASE_URL = RAW_DB_URL
+    if DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+    if "localhost" not in DATABASE_URL and "127.0.0.1" not in DATABASE_URL:
+        if "sslmode=" not in DATABASE_URL:
+            separator = "&" if "?" in DATABASE_URL else "?"
+            DATABASE_URL = f"{DATABASE_URL}{separator}sslmode=require"
+else:
+    DATABASE_URL = "postgresql://postgres:postgresql@localhost:5432/intervai"
 
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
     pool_recycle=300,
-    connect_args={"connect_timeout": 5}
+    connect_args={"connect_timeout": 15}
 )
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -333,6 +342,13 @@ def startup_event():
 
 @app.get("/database-test")
 def database_test():
+    if IS_ON_VERCEL and not HAS_CUSTOM_DB:
+        return {
+            "success": False,
+            "message": "DATABASE_URL is not configured in Vercel Environment Variables. Please add your Neon or Supabase PostgreSQL connection string in Vercel Project Settings > Environment Variables, then redeploy.",
+            "is_on_vercel": True,
+            "has_database_url": False
+        }
     try:
         ensure_database_ready()
         with engine.connect() as connection:
@@ -343,12 +359,16 @@ def database_test():
             "message": "PostgreSQL connected and all 7 tables verified successfully!",
             "database_test": value,
             "total_users_in_db": user_count,
+            "is_on_vercel": IS_ON_VERCEL,
+            "has_database_url": HAS_CUSTOM_DB
         }
     except Exception as error:
         return {
             "success": False,
-            "message": "PostgreSQL connection failed. Ensure DATABASE_URL is set correctly in Vercel Project Settings > Environment Variables.",
+            "message": "PostgreSQL connection failed. Ensure DATABASE_URL is set correctly in Vercel Project Settings > Environment Variables and that the database is online.",
             "error": str(error),
+            "is_on_vercel": IS_ON_VERCEL,
+            "has_database_url": HAS_CUSTOM_DB
         }
 
 
@@ -370,7 +390,13 @@ def tables_test():
 
 @app.post("/signup")
 def signup(name: str = Form(...), email: str = Form(...), password: str = Form(...)):
-    ensure_database_ready()
+    if IS_ON_VERCEL and not HAS_CUSTOM_DB:
+        return {
+            "success": False,
+            "message": "Cloud database not connected. Please add DATABASE_URL (from Neon.tech or Supabase) in your Vercel Project Settings > Environment Variables, then redeploy.",
+            "vercel_missing_db": True
+        }
+
     name = name.strip()
     email = email.strip().lower()
 
@@ -392,6 +418,7 @@ def signup(name: str = Form(...), email: str = Form(...), password: str = Form(.
         return {"success": False, "message": "Password must be at least 8 characters long and contain both letters and numbers."}
 
     try:
+        ensure_database_ready()
         with engine.connect() as connection:
             existing_user = connection.execute(
                 text("SELECT id FROM users WHERE email = :email"),
@@ -420,12 +447,27 @@ def signup(name: str = Form(...), email: str = Form(...), password: str = Form(.
             "user": {"id": user.id, "name": user.name, "email": user.email}
         }
     except Exception as error:
-        return {"success": False, "message": "Something went wrong while creating your account. Please try again.", "error": str(error)}
+        err_msg = str(error)
+        logger.error("Signup error: %s", err_msg)
+        if any(w in err_msg.lower() for w in ("connect", "connection", "operationalerror", "timeout", "permission denied")):
+            return {
+                "success": False,
+                "message": "Database connection error. Could not reach PostgreSQL server. Please check DATABASE_URL in Vercel.",
+                "error": err_msg,
+                "vercel_missing_db": IS_ON_VERCEL and not HAS_CUSTOM_DB
+            }
+        return {"success": False, "message": "Something went wrong while creating your account. Please try again.", "error": err_msg}
 
 
 @app.post("/login")
 def login(request: Request, email: str = Form(...), password: str = Form(...)):
-    ensure_database_ready()
+    if IS_ON_VERCEL and not HAS_CUSTOM_DB:
+        return {
+            "success": False,
+            "message": "Cloud database not connected. Please add DATABASE_URL (from Neon.tech or Supabase) in your Vercel Project Settings > Environment Variables, then redeploy.",
+            "vercel_missing_db": True
+        }
+
     email = email.strip().lower()
     client_ip = request.client.host if request.client else "unknown"
     rate_key = f"{client_ip}:{email}"
@@ -438,6 +480,7 @@ def login(request: Request, email: str = Form(...), password: str = Form(...)):
         }
 
     try:
+        ensure_database_ready()
         with engine.connect() as connection:
             user = connection.execute(
                 text("SELECT id, name, email, password_hash FROM users WHERE email = :email"),
@@ -460,7 +503,16 @@ def login(request: Request, email: str = Form(...), password: str = Form(...)):
             "user": {"id": user.id, "name": user.name, "email": user.email}
         }
     except Exception as error:
-        return {"success": False, "message": "Something went wrong while logging in.", "error": str(error)}
+        err_msg = str(error)
+        logger.error("Login error: %s", err_msg)
+        if any(w in err_msg.lower() for w in ("connect", "connection", "operationalerror", "timeout", "permission denied")):
+            return {
+                "success": False,
+                "message": "Database connection error. Could not reach PostgreSQL server. Please check DATABASE_URL in Vercel.",
+                "error": err_msg,
+                "vercel_missing_db": IS_ON_VERCEL and not HAS_CUSTOM_DB
+            }
+        return {"success": False, "message": "Something went wrong while logging in.", "error": err_msg}
 
 
 @app.get("/logout")

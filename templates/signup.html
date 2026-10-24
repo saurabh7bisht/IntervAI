@@ -312,7 +312,14 @@ const form = document.getElementById("signupForm");
                     return;
                 }
 
-                errorMessage.textContent = data.message || "Unable to register candidate account.";
+                let errorHtml = `<strong>${data.message || "Unable to register candidate account."}</strong>`;
+                if (data.error && data.error !== data.message) {
+                    errorHtml += `<br><span style="font-size:11px;opacity:0.85;font-family:monospace;display:block;margin-top:6px;word-break:break-all;">Error: ${data.error}</span>`;
+                }
+                if (data.vercel_missing_db) {
+                    errorHtml += `<br><a href="https://neon.tech" target="_blank" style="color:#60a5fa;text-decoration:underline;display:inline-block;margin-top:8px;font-weight:600;">👉 Create Free Neon Database &rarr;</a>`;
+                }
+                errorMessage.innerHTML = errorHtml;
                 errorMessage.style.display = "block";
 
             } catch (error) {

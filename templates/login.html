@@ -211,7 +211,14 @@ const form = document.getElementById("loginForm");
                     rateLimitBox.innerHTML = "<strong>Security Notice:</strong> " + (data.message || "Too many failed attempts. Temporarily locked.");
                     rateLimitBox.style.display = "block";
                 } else {
-                    errorMessage.textContent = data.message || "Login failed. Please check your credentials.";
+                    let errorHtml = `<strong>${data.message || "Login failed. Please check your credentials."}</strong>`;
+                    if (data.error && data.error !== data.message) {
+                        errorHtml += `<br><span style="font-size:11px;opacity:0.85;font-family:monospace;display:block;margin-top:6px;word-break:break-all;">Error: ${data.error}</span>`;
+                    }
+                    if (data.vercel_missing_db) {
+                        errorHtml += `<br><a href="https://neon.tech" target="_blank" style="color:#60a5fa;text-decoration:underline;display:inline-block;margin-top:8px;font-weight:600;">👉 Create Free Neon Database &rarr;</a>`;
+                    }
+                    errorMessage.innerHTML = errorHtml;
                     errorMessage.style.display = "block";
                 }
 
